@@ -1,0 +1,14 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: PodChaos
+metadata:
+  name: kill-one-nginx
+  namespace: chaos-demo
+spec:
+  mode: one
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: nginx
+  action: pod-kill
+  duration: "50s"

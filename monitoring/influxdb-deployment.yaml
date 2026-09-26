@@ -1,0 +1,115 @@
+# --------------------------------------------------------------------
+# InfluxDB v1.8 — backend para los outputs de k6.
+#
+# Modelo de seguridad (kind local):
+#   - Service tipo ClusterIP. NO se expone fuera del cluster.
+#   - Acceso desde el host vía 'kubectl port-forward' bajo demanda.
+#   - InfluxDB v1.8 sin auth: aceptable solo en kind local. Si en algún
+#     momento se promueve a otro entorno, configurar httpd auth + admin
+#     user vía Secret externo.
+#   - emptyDir: los datos NO persisten entre restarts del pod. Es lo que
+#     queremos para un store de telemetría de tests; nada de PII a proteger.
+#   - Pod security: non-root, RO fs (excepto /var/lib/influxdb), drop ALL caps.
+# --------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: influxdb-init
+  namespace: monitoring
+data:
+  init.iql: |
+    CREATE DATABASE k6;
+    CREATE RETENTION POLICY "k6_2w" ON "k6" DURATION 2w REPLICATION 1 DEFAULT;
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb
+  namespace: monitoring
+  labels:
+    app: influxdb
+    role: k6-backend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+        role: k6-backend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1500
+        runAsGroup: 1500
+        fsGroup: 1500
+      containers:
+        - name: influxdb
+          # Pinneado a versión inmutable: defense contra supply chain
+          # (tags mutables como :1.8-alpine pueden cambiar bajo nuestros pies).
+          image: influxdb:1.8.10
+          imagePullPolicy: IfNotPresent  # Usa cache de kind si está pre-cargada.
+          ports:
+            - name: http
+              containerPort: 8086
+          env:
+            - name: INFLUXDB_DB
+              value: k6
+            - name: INFLUXDB_HTTP_AUTH_ENABLED
+              value: "false"  # local kind only — ver nota arriba
+            - name: INFLUXDB_REPORTING_DISABLED
+              value: "true"
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 8086
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 8086
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/influxdb
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb
+  namespace: monitoring
+  labels:
+    app: influxdb
+spec:
+  type: ClusterIP
+  selector:
+    app: influxdb
+  ports:
+    - name: http
+      port: 8086
+      targetPort: 8086

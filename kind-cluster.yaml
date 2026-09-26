@@ -1,0 +1,49 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: chaos-testing-v2
+
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 30080
+        protocol: TCP
+      - containerPort: 30030
+        hostPort: 30030
+        protocol: TCP   # Grafana NodePort
+
+  - role: worker
+    labels:
+      node-role: worker
+      chaos-eligible: "true"
+
+  - role: worker
+    labels:
+      node-role: worker
+      chaos-eligible: "true"
+
+# Habilitar métricas del kubelet para Prometheus (cAdvisor)
+kubeadmConfigPatches:
+  - |
+    kind: ClusterConfiguration
+    controllerManager:
+      extraArgs:
+        bind-address: "0.0.0.0"
+    scheduler:
+      extraArgs:
+        bind-address: "0.0.0.0"
+    etcd:
+      local:
+        extraArgs:
+          listen-metrics-urls: "http://0.0.0.0:2381"
+  - |
+    kind: KubeletConfiguration
+    serverTLSBootstrap: true
+    # NOTA: serverTLSBootstrap=true requiere aprobar los CSRs manualmente tras crear el cluster:
+    #   kubectl get csr | grep Pending | awk '{print $1}' | xargs kubectl certificate approve

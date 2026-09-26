@@ -1,0 +1,41 @@
+run:
+  timeout: 5m
+linters:
+  enable:
+    - govet
+    - gosimple
+    - staticcheck
+    - gofumpt
+    - revive
+    - ineffassign
+    - errcheck
+    - goconst
+    - gocyclo
+    - gosec
+  disable:
+    - depguard
+linters-settings:
+  gofumpt:
+    extra-rules: true
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: early-return
+      - name: errorf
+      - name: exported
+      - name: error-naming
+      - name: if-return
+      - name: increment-decrement
+      - name: indent-error-flow
+      - name: import-shadowing
+      - name: package-comments
+      - name: receiver-naming
+      - name: time-naming
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: true
+  severity: warning

@@ -1,0 +1,124 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: chaos-operator-mutating-webhook
+webhooks:
+  - admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: chaos-operator-webhook
+        namespace: chaos-system
+        path: /mutate-chaos-engineering-io-v1alpha1-podchaos
+    failurePolicy: Fail
+    name: mpodchaos.kb.io
+    rules:
+      - apiGroups: ["chaos.engineering.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["podchaos"]
+    sideEffects: None
+  - admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: chaos-operator-webhook
+        namespace: chaos-system
+        path: /mutate-chaos-engineering-io-v1alpha1-networkchaos
+    failurePolicy: Fail
+    name: mnetworkchaos.kb.io
+    rules:
+      - apiGroups: ["chaos.engineering.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["networkchaos"]
+    sideEffects: None
+  - admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: chaos-operator-webhook
+        namespace: chaos-system
+        path: /mutate-chaos-engineering-io-v1alpha1-stresschaos
+    failurePolicy: Fail
+    name: mstresschaos.kb.io
+    rules:
+      - apiGroups: ["chaos.engineering.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["stresschaos"]
+    sideEffects: None
+  - admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: chaos-operator-webhook
+        namespace: chaos-system
+        path: /mutate-chaos-engineering-io-v1alpha1-httpchaos
+    failurePolicy: Fail
+    name: mhttpchaos.kb.io
+    rules:
+      - apiGroups: ["chaos.engineering.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["httpchaos"]
+    sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: chaos-operator-validating-webhook
+webhooks:
+  - admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: chaos-operator-webhook
+        namespace: chaos-system
+        path: /validate-chaos-engineering-io-v1alpha1-podchaos
+    failurePolicy: Fail
+    name: vpodchaos.kb.io
+    rules:
+      - apiGroups: ["chaos.engineering.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["podchaos"]
+    sideEffects: None
+  - admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: chaos-operator-webhook
+        namespace: chaos-system
+        path: /validate-chaos-engineering-io-v1alpha1-networkchaos
+    failurePolicy: Fail
+    name: vnetworkchaos.kb.io
+    rules:
+      - apiGroups: ["chaos.engineering.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["networkchaos"]
+    sideEffects: None
+  - admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: chaos-operator-webhook
+        namespace: chaos-system
+        path: /validate-chaos-engineering-io-v1alpha1-stresschaos
+    failurePolicy: Fail
+    name: vstresschaos.kb.io
+    rules:
+      - apiGroups: ["chaos.engineering.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["stresschaos"]
+    sideEffects: None
+  - admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: chaos-operator-webhook
+        namespace: chaos-system
+        path: /validate-chaos-engineering-io-v1alpha1-httpchaos
+    failurePolicy: Fail
+    name: vhttpchaos.kb.io
+    rules:
+      - apiGroups: ["chaos.engineering.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["httpchaos"]
+    sideEffects: None

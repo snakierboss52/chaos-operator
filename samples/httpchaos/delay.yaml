@@ -1,0 +1,24 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: HTTPChaos
+metadata:
+  name: http-delay
+  namespace: chaos-demo
+spec:
+  mode: fixed-percent
+  value: "50"
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: nginx
+  target: Request
+  port: 80
+  method: GET
+  path: "/*"
+  delay:
+    latency: "2s"
+    jitter: "500ms"
+    percentage: 50
+  duration: "10m"
+  blastRadius:
+    maxPods: 3

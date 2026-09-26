@@ -1,0 +1,804 @@
+apiVersion: v1
+data:
+  chaos-dashboard.json: |
+    {
+        "title": "Chaos Engineering Dashboard",
+        "tags": ["chaos", "kubernetes"],
+        "timezone": "browser",
+        "schemaVersion": 16,
+        "version": 1,
+        "refresh": "10s",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Total Chaos Experiments",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+            "targets": [{
+              "expr": "sum(chaos_experiments_total)",
+              "refId": "A"
+            }],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {"value": null, "color": "green"},
+                    {"value": 10, "color": "yellow"},
+                    {"value": 50, "color": "red"}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 2,
+            "title": "Active Experiments",
+            "type": "stat",
+            "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+            "targets": [{
+              "expr": "sum(chaos_experiments_active)",
+              "refId": "A"
+            }],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {"value": null, "color": "green"},
+                    {"value": 5, "color": "yellow"},
+                    {"value": 10, "color": "red"}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 3,
+            "title": "Targets Affected",
+            "type": "stat",
+            "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+            "targets": [{
+              "expr": "sum(chaos_targets_affected_total)",
+              "refId": "A"
+            }],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "palette-classic"}
+              }
+            }
+          },
+          {
+            "id": 4,
+            "title": "Execution Errors",
+            "type": "stat",
+            "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+            "targets": [{
+              "expr": "sum(chaos_execution_errors_total)",
+              "refId": "A"
+            }],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {"value": null, "color": "green"},
+                    {"value": 1, "color": "yellow"},
+                    {"value": 5, "color": "red"}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 5,
+            "title": "Experiments by Type Over Time",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+            "targets": [{
+              "expr": "sum(rate(chaos_experiments_total[5m])) by (type)",
+              "legendFormat": "{{type}}",
+              "refId": "A"
+            }],
+            "yaxes": [
+              {"format": "short", "label": "Rate"},
+              {"format": "short"}
+            ],
+            "xaxis": {"mode": "time"}
+          },
+          {
+            "id": 6,
+            "title": "Active Experiments by Phase",
+            "type": "piechart",
+            "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+            "targets": [{
+              "expr": "sum(chaos_experiments_active) by (phase)",
+              "legendFormat": "{{phase}}",
+              "refId": "A"
+            }],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"},
+              "pieType": "donut"
+            }
+          },
+          {
+            "id": 7,
+            "title": "Experiment Duration (95th percentile)",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8},
+            "targets": [{
+              "expr": "histogram_quantile(0.95, sum(rate(chaos_experiments_duration_seconds_bucket[5m])) by (le, type))",
+              "legendFormat": "{{type}}",
+              "refId": "A"
+            }],
+            "yaxes": [
+              {"format": "s", "label": "Duration"},
+              {"format": "short"}
+            ],
+            "xaxis": {"mode": "time"}
+          },
+          {
+            "id": 8,
+            "title": "Targets Affected by Action",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 12, "w": 12, "h": 8},
+            "targets": [{
+              "expr": "sum(increase(chaos_targets_affected_total[5m])) by (action)",
+              "legendFormat": "{{action}}",
+              "refId": "A"
+            }],
+            "yaxes": [
+              {"format": "short", "label": "Pods"},
+              {"format": "short"}
+            ],
+            "xaxis": {"mode": "time"}
+          },
+          {
+            "id": 9,
+            "title": "Experiments by Status",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 20, "w": 12, "h": 8},
+            "targets": [{
+              "expr": "sum(increase(chaos_experiments_status_total[5m])) by (status)",
+              "legendFormat": "{{status}}",
+              "refId": "A"
+            }],
+            "yaxes": [
+              {"format": "short", "label": "Count"},
+              {"format": "short"}
+            ],
+            "xaxis": {"mode": "time"}
+          },
+          {
+            "id": 10,
+            "title": "Reconciliation Duration (p95)",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 20, "w": 12, "h": 8},
+            "targets": [{
+              "expr": "histogram_quantile(0.95, sum(rate(chaos_reconciliation_duration_seconds_bucket[5m])) by (le, type))",
+              "legendFormat": "{{type}}",
+              "refId": "A"
+            }],
+            "yaxes": [
+              {"format": "s", "label": "Duration"},
+              {"format": "short"}
+            ],
+            "xaxis": {"mode": "time"}
+          },
+          {
+            "id": 11,
+            "title": "Blast Radius Limits Hit",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 28, "w": 12, "h": 4},
+            "targets": [{
+              "expr": "sum(increase(chaos_blast_radius_limit_total[1h]))",
+              "refId": "A"
+            }],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {"value": null, "color": "green"},
+                    {"value": 5, "color": "yellow"},
+                    {"value": 20, "color": "red"}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 12,
+            "title": "Errors by Type",
+            "type": "table",
+            "gridPos": {"x": 12, "y": 28, "w": 12, "h": 8},
+            "targets": [{
+              "expr": "sum(chaos_execution_errors_total) by (type, error_type)",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }],
+            "transformations": [{
+              "id": "organize",
+              "options": {
+                "excludeByName": {"Time": true},
+                "indexByName": {},
+                "renameByName": {
+                  "type": "Chaos Type",
+                  "error_type": "Error Type",
+                  "Value": "Count"
+                }
+              }
+            }]
+          }
+        ]
+    }
+  operator-overview-dashboard.json: |
+    {
+        "title": "Chaos Operator - Overview",
+        "tags": ["chaos", "kubernetes", "operator"],
+        "timezone": "browser",
+        "schemaVersion": 16,
+        "version": 1,
+        "refresh": "10s",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Active Experiments",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(chaos_experiments_active)", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [
+                  {"value": null, "color": "green"},
+                  {"value": 5, "color": "yellow"},
+                  {"value": 10, "color": "red"}
+                ]}
+              }
+            }
+          },
+          {
+            "id": 2,
+            "title": "Total Experiments Created",
+            "type": "stat",
+            "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(chaos_experiments_total)", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [
+                  {"value": null, "color": "blue"}
+                ]}
+              }
+            }
+          },
+          {
+            "id": 3,
+            "title": "Success Rate",
+            "type": "gauge",
+            "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(chaos_experiments_status_total{status=\"Completed\"}) / sum(chaos_experiments_status_total) * 100", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percent",
+                "min": 0,
+                "max": 100,
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [
+                  {"value": null, "color": "red"},
+                  {"value": 70, "color": "yellow"},
+                  {"value": 90, "color": "green"}
+                ]}
+              }
+            }
+          },
+          {
+            "id": 4,
+            "title": "Error Rate (5m)",
+            "type": "stat",
+            "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(rate(chaos_execution_errors_total[5m]))", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [
+                  {"value": null, "color": "green"},
+                  {"value": 0.1, "color": "yellow"},
+                  {"value": 1, "color": "red"}
+                ]}
+              }
+            }
+          },
+          {
+            "id": 5,
+            "title": "Experiments by Type",
+            "type": "piechart",
+            "gridPos": {"x": 0, "y": 4, "w": 8, "h": 8},
+            "targets": [
+              {"expr": "sum(chaos_experiments_total) by (type)", "legendFormat": "{{type}}", "refId": "A"}
+            ]
+          },
+          {
+            "id": 6,
+            "title": "Active Experiments by Type & Phase",
+            "type": "bargauge",
+            "gridPos": {"x": 8, "y": 4, "w": 8, "h": 8},
+            "targets": [
+              {"expr": "chaos_experiments_active", "legendFormat": "{{type}} - {{phase}}", "refId": "A"}
+            ]
+          },
+          {
+            "id": 7,
+            "title": "Targets Affected Over Time",
+            "type": "timeseries",
+            "gridPos": {"x": 16, "y": 4, "w": 8, "h": 8},
+            "targets": [
+              {"expr": "sum(rate(chaos_targets_affected_total[5m])) by (type)", "legendFormat": "{{type}}", "refId": "A"}
+            ],
+            "fieldConfig": {
+              "defaults": {"unit": "ops"}
+            }
+          },
+          {
+            "id": 8,
+            "title": "PodChaos Experiments",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 12, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(chaos_experiments_total{type=\"PodChaos\"})", "refId": "A"}],
+            "fieldConfig": {"defaults": {"color": {"fixedColor": "blue", "mode": "fixed"}}}
+          },
+          {
+            "id": 9,
+            "title": "NetworkChaos Experiments",
+            "type": "stat",
+            "gridPos": {"x": 6, "y": 12, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(chaos_experiments_total{type=\"NetworkChaos\"})", "refId": "A"}],
+            "fieldConfig": {"defaults": {"color": {"fixedColor": "orange", "mode": "fixed"}}}
+          },
+          {
+            "id": 10,
+            "title": "StressChaos Experiments",
+            "type": "stat",
+            "gridPos": {"x": 12, "y": 12, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(chaos_experiments_total{type=\"StressChaos\"})", "refId": "A"}],
+            "fieldConfig": {"defaults": {"color": {"fixedColor": "purple", "mode": "fixed"}}}
+          },
+          {
+            "id": 11,
+            "title": "HTTPChaos Experiments",
+            "type": "stat",
+            "gridPos": {"x": 18, "y": 12, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(chaos_experiments_total{type=\"HTTPChaos\"})", "refId": "A"}],
+            "fieldConfig": {"defaults": {"color": {"fixedColor": "green", "mode": "fixed"}}}
+          },
+          {
+            "id": 12,
+            "title": "Experiment Duration Distribution",
+            "type": "histogram",
+            "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+            "targets": [
+              {"expr": "chaos_experiments_duration_seconds_bucket", "legendFormat": "{{type}} - {{action}}", "refId": "A", "format": "heatmap"}
+            ]
+          },
+          {
+            "id": 13,
+            "title": "Reconciliation Duration (p99)",
+            "type": "timeseries",
+            "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+            "targets": [
+              {"expr": "histogram_quantile(0.99, sum(rate(chaos_reconciliation_duration_seconds_bucket[5m])) by (le, type))", "legendFormat": "{{type}} p99", "refId": "A"}
+            ],
+            "fieldConfig": {
+              "defaults": {"unit": "s"}
+            }
+          },
+          {
+            "id": 14,
+            "title": "Blast Radius Limits Hit",
+            "type": "timeseries",
+            "gridPos": {"x": 0, "y": 24, "w": 12, "h": 6},
+            "targets": [
+              {"expr": "sum(rate(chaos_blast_radius_limit_total[5m])) by (type)", "legendFormat": "{{type}}", "refId": "A"}
+            ]
+          },
+          {
+            "id": 15,
+            "title": "Execution Errors by Type",
+            "type": "timeseries",
+            "gridPos": {"x": 12, "y": 24, "w": 12, "h": 6},
+            "targets": [
+              {"expr": "sum(rate(chaos_execution_errors_total[5m])) by (type, error_type)", "legendFormat": "{{type}} - {{error_type}}", "refId": "A"}
+            ]
+          },
+          {
+            "id": 16,
+            "title": "Experiment Status Distribution",
+            "type": "piechart",
+            "gridPos": {"x": 0, "y": 30, "w": 12, "h": 8},
+            "targets": [
+              {"expr": "sum(chaos_experiments_status_total) by (status)", "legendFormat": "{{status}}", "refId": "A"}
+            ]
+          },
+          {
+            "id": 17,
+            "title": "Average Experiment Duration by Type",
+            "type": "bargauge",
+            "gridPos": {"x": 12, "y": 30, "w": 12, "h": 8},
+            "targets": [
+              {"expr": "chaos_experiments_duration_seconds_sum / chaos_experiments_duration_seconds_count", "legendFormat": "{{type}} - {{action}}", "refId": "A"}
+            ],
+            "fieldConfig": {
+              "defaults": {"unit": "s"}
+            }
+          }
+        ]
+    }
+  cluster-monitoring-dashboard.json: |
+    {
+        "title": "Chaos Operator - Cluster Monitoring",
+        "tags": ["chaos", "kubernetes", "cluster", "monitoring"],
+        "timezone": "browser",
+        "schemaVersion": 16,
+        "version": 1,
+        "refresh": "10s",
+        "templating": {
+          "list": [
+            {
+              "name": "namespace",
+              "type": "query",
+              "query": "label_values(kube_pod_info, namespace)",
+              "datasource": "Prometheus",
+              "refresh": 2,
+              "includeAll": true,
+              "multi": true,
+              "current": {"text": "All", "value": "$__all"}
+            }
+          ]
+        },
+        "panels": [
+          {
+            "id": 100,
+            "title": "Cluster Overview",
+            "type": "row",
+            "gridPos": {"x": 0, "y": 0, "w": 24, "h": 1},
+            "collapsed": false
+          },
+          {
+            "id": 1,
+            "title": "Total Running Pods",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 1, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(kube_pod_status_phase{phase=\"Running\"})", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [
+                  {"value": null, "color": "green"}
+                ]}
+              }
+            }
+          },
+          {
+            "id": 2,
+            "title": "Total Cluster CPU Usage",
+            "type": "stat",
+            "gridPos": {"x": 6, "y": 1, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\", container!=\"POD\"}[5m]))", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [
+                  {"value": null, "color": "green"},
+                  {"value": 2, "color": "yellow"},
+                  {"value": 4, "color": "red"}
+                ]}
+              }
+            }
+          },
+          {
+            "id": 3,
+            "title": "Total Cluster Memory Usage",
+            "type": "stat",
+            "gridPos": {"x": 12, "y": 1, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(container_memory_working_set_bytes{container!=\"\", container!=\"POD\"})", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes",
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [
+                  {"value": null, "color": "green"},
+                  {"value": 2147483648, "color": "yellow"},
+                  {"value": 4294967296, "color": "red"}
+                ]}
+              }
+            }
+          },
+          {
+            "id": 4,
+            "title": "Unavailable Pods",
+            "type": "stat",
+            "gridPos": {"x": 18, "y": 1, "w": 6, "h": 4},
+            "targets": [{"expr": "sum(kube_deployment_status_replicas_unavailable)", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [
+                  {"value": null, "color": "green"},
+                  {"value": 1, "color": "yellow"},
+                  {"value": 3, "color": "red"}
+                ]}
+              }
+            }
+          },
+          {
+            "id": 101,
+            "title": "Pods by Deployment",
+            "type": "row",
+            "gridPos": {"x": 0, "y": 5, "w": 24, "h": 1},
+            "collapsed": false
+          },
+          {
+            "id": 5,
+            "title": "Running Pods by Deployment",
+            "type": "bargauge",
+            "gridPos": {"x": 0, "y": 6, "w": 12, "h": 8},
+            "targets": [{"expr": "kube_deployment_status_replicas_available{namespace=~\"$namespace\"}", "legendFormat": "{{namespace}}/{{deployment}}", "refId": "A", "instant": true}],
+            "options": {
+              "orientation": "horizontal",
+              "displayMode": "gradient",
+              "showUnfilled": true
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "palette-classic"},
+                "min": 0
+              }
+            }
+          },
+          {
+            "id": 6,
+            "title": "Desired vs Available Replicas",
+            "type": "table",
+            "gridPos": {"x": 12, "y": 6, "w": 12, "h": 8},
+            "targets": [
+              {"expr": "kube_deployment_spec_replicas{namespace=~\"$namespace\"}", "legendFormat": "", "refId": "A", "instant": true, "format": "table"},
+              {"expr": "kube_deployment_status_replicas_available{namespace=~\"$namespace\"}", "legendFormat": "", "refId": "B", "instant": true, "format": "table"},
+              {"expr": "kube_deployment_status_replicas_unavailable{namespace=~\"$namespace\"}", "legendFormat": "", "refId": "C", "instant": true, "format": "table"}
+            ],
+            "transformations": [
+              {"id": "merge"},
+              {"id": "organize", "options": {
+                "excludeByName": {"Time": true, "__name__": true, "job": true, "instance": true},
+                "renameByName": {
+                  "namespace": "Namespace",
+                  "deployment": "Deployment",
+                  "Value #A": "Desired",
+                  "Value #B": "Available",
+                  "Value #C": "Unavailable"
+                }
+              }}
+            ]
+          },
+          {
+            "id": 102,
+            "title": "CPU Usage",
+            "type": "row",
+            "gridPos": {"x": 0, "y": 14, "w": 24, "h": 1},
+            "collapsed": false
+          },
+          {
+            "id": 7,
+            "title": "CPU Usage by Deployment",
+            "type": "timeseries",
+            "gridPos": {"x": 0, "y": 15, "w": 12, "h": 8},
+            "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\", container!=\"POD\", namespace=~\"$namespace\"}[5m])) by (namespace, pod)", "legendFormat": "{{namespace}}/{{pod}}", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "custom": {"fillOpacity": 10, "lineWidth": 1, "stacking": {"mode": "none"}}
+              }
+            },
+            "options": {"legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}}
+          },
+          {
+            "id": 8,
+            "title": "CPU Usage Over Time (Cluster Total)",
+            "type": "timeseries",
+            "gridPos": {"x": 12, "y": 15, "w": 12, "h": 8},
+            "targets": [
+              {"expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\", container!=\"POD\"}[5m]))", "legendFormat": "Total CPU", "refId": "A"},
+              {"expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\", container!=\"POD\", namespace=\"chaos-demo\"}[5m]))", "legendFormat": "chaos-demo", "refId": "B"},
+              {"expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\", container!=\"POD\", namespace=\"chaos-system\"}[5m]))", "legendFormat": "chaos-system", "refId": "C"}
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "custom": {"fillOpacity": 20, "lineWidth": 2}
+              }
+            }
+          },
+          {
+            "id": 103,
+            "title": "Memory Usage",
+            "type": "row",
+            "gridPos": {"x": 0, "y": 23, "w": 24, "h": 1},
+            "collapsed": false
+          },
+          {
+            "id": 9,
+            "title": "Memory Usage by Deployment",
+            "type": "timeseries",
+            "gridPos": {"x": 0, "y": 24, "w": 12, "h": 8},
+            "targets": [{"expr": "sum(container_memory_working_set_bytes{container!=\"\", container!=\"POD\", namespace=~\"$namespace\"}) by (namespace, pod)", "legendFormat": "{{namespace}}/{{pod}}", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes",
+                "custom": {"fillOpacity": 10, "lineWidth": 1}
+              }
+            },
+            "options": {"legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}}
+          },
+          {
+            "id": 10,
+            "title": "Memory Usage Over Time (Cluster Total)",
+            "type": "timeseries",
+            "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
+            "targets": [
+              {"expr": "sum(container_memory_working_set_bytes{container!=\"\", container!=\"POD\"})", "legendFormat": "Total Memory", "refId": "A"},
+              {"expr": "sum(container_memory_working_set_bytes{container!=\"\", container!=\"POD\", namespace=\"chaos-demo\"})", "legendFormat": "chaos-demo", "refId": "B"},
+              {"expr": "sum(container_memory_working_set_bytes{container!=\"\", container!=\"POD\", namespace=\"chaos-system\"})", "legendFormat": "chaos-system", "refId": "C"}
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes",
+                "custom": {"fillOpacity": 20, "lineWidth": 2}
+              }
+            }
+          },
+          {
+            "id": 104,
+            "title": "Network Monitoring",
+            "type": "row",
+            "gridPos": {"x": 0, "y": 32, "w": 24, "h": 1},
+            "collapsed": false
+          },
+          {
+            "id": 11,
+            "title": "Network Receive Bytes (chaos-demo)",
+            "type": "timeseries",
+            "gridPos": {"x": 0, "y": 33, "w": 12, "h": 8},
+            "targets": [{"expr": "sum(rate(container_network_receive_bytes_total{namespace=\"chaos-demo\"}[5m])) by (pod)", "legendFormat": "{{pod}}", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "Bps",
+                "custom": {"fillOpacity": 10, "lineWidth": 1}
+              }
+            },
+            "options": {"legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}}
+          },
+          {
+            "id": 12,
+            "title": "Network Transmit Bytes (chaos-demo)",
+            "type": "timeseries",
+            "gridPos": {"x": 12, "y": 33, "w": 12, "h": 8},
+            "targets": [{"expr": "sum(rate(container_network_transmit_bytes_total{namespace=\"chaos-demo\"}[5m])) by (pod)", "legendFormat": "{{pod}}", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "Bps",
+                "custom": {"fillOpacity": 10, "lineWidth": 1}
+              }
+            },
+            "options": {"legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}}
+          },
+          {
+            "id": 13,
+            "title": "Network Chaos - Active Experiments",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 41, "w": 8, "h": 4},
+            "targets": [
+              {"expr": "chaos_experiments_active{type=\"NetworkChaos\"}", "legendFormat": "{{phase}}", "refId": "A"}
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [
+                  {"value": null, "color": "green"},
+                  {"value": 1, "color": "orange"},
+                  {"value": 3, "color": "red"}
+                ]}
+              }
+            }
+          },
+          {
+            "id": 14,
+            "title": "Network Chaos Targets Affected",
+            "type": "timeseries",
+            "gridPos": {"x": 8, "y": 41, "w": 8, "h": 8},
+            "targets": [
+              {"expr": "sum(increase(chaos_targets_affected_total{type=\"NetworkChaos\"}[5m])) by (action)", "legendFormat": "{{action}}", "refId": "A"}
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "custom": {"fillOpacity": 30, "lineWidth": 2}
+              }
+            }
+          },
+          {
+            "id": 15,
+            "title": "Packet Rate by Pod (chaos-demo)",
+            "description": "Drop in packet rate indicates network chaos impact (delay, loss, partition)",
+            "type": "timeseries",
+            "gridPos": {"x": 16, "y": 41, "w": 8, "h": 8},
+            "targets": [
+              {"expr": "sum(rate(container_network_receive_packets_total{namespace=\"chaos-demo\"}[2m])) by (pod)", "legendFormat": "rx {{pod}}", "refId": "A"},
+              {"expr": "sum(rate(container_network_transmit_packets_total{namespace=\"chaos-demo\"}[2m])) by (pod)", "legendFormat": "tx {{pod}}", "refId": "B"}
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "pps",
+                "custom": {"fillOpacity": 10, "lineWidth": 1}
+              }
+            }
+          },
+          {
+            "id": 18,
+            "title": "Pods Not Ready (chaos-demo)",
+            "description": "Pods failing readiness probes due to network chaos",
+            "type": "timeseries",
+            "gridPos": {"x": 0, "y": 45, "w": 8, "h": 4},
+            "targets": [
+              {"expr": "kube_pod_status_ready{namespace=\"chaos-demo\", condition=\"false\"}", "legendFormat": "{{pod}}", "refId": "A"}
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "custom": {"fillOpacity": 40, "lineWidth": 2, "drawStyle": "bars"},
+                "color": {"mode": "fixed", "fixedColor": "red"}
+              }
+            }
+          },
+          {
+            "id": 16,
+            "title": "Network Traffic Total (RX vs TX)",
+            "type": "timeseries",
+            "gridPos": {"x": 0, "y": 49, "w": 12, "h": 8},
+            "targets": [
+              {"expr": "sum(rate(container_network_receive_bytes_total{namespace=\"chaos-demo\"}[5m]))", "legendFormat": "Receive", "refId": "A"},
+              {"expr": "sum(rate(container_network_transmit_bytes_total{namespace=\"chaos-demo\"}[5m]))", "legendFormat": "Transmit", "refId": "B"}
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "Bps",
+                "custom": {"fillOpacity": 20, "lineWidth": 2}
+              }
+            }
+          },
+          {
+            "id": 17,
+            "title": "Pod Restarts by Deployment",
+            "type": "timeseries",
+            "gridPos": {"x": 12, "y": 49, "w": 12, "h": 8},
+            "targets": [{"expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[5m])) by (namespace, pod)", "legendFormat": "{{namespace}}/{{pod}}", "refId": "A"}],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "custom": {"fillOpacity": 30, "lineWidth": 2, "drawStyle": "bars"}
+              }
+            }
+          }
+        ]
+    }
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"

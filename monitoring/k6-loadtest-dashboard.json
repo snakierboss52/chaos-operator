@@ -1,0 +1,310 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+          "groupBy": [{"params": ["$__interval"], "type": "time"}],
+          "measurement": "vus",
+          "policy": "default",
+          "refId": "A",
+          "select": [[{"params": ["value"], "type": "field"}, {"params": [], "type": "max"}]],
+          "tags": []
+        }
+      ],
+      "title": "VUs activos (max)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+          "measurement": "chaos_load_crs_failed",
+          "refId": "A",
+          "select": [[{"params": ["value"], "type": "field"}, {"params": [], "type": "sum"}]]
+        }
+      ],
+      "title": "CRs fallidos (acumulado)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1500}, {"color": "red", "value": 3000}]},
+          "unit": "ms"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["max"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+          "measurement": "chaos_load_reconcile_wait_ms",
+          "refId": "A",
+          "select": [[{"params": ["value"], "type": "field"}, {"params": [95], "type": "percentile"}]]
+        }
+      ],
+      "title": "Reconcile wait p95 (ms)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+          "measurement": "chaos_load_crs_created",
+          "refId": "A",
+          "select": [[{"params": ["value"], "type": "field"}, {"params": [], "type": "sum"}]]
+        }
+      ],
+      "title": "CRs creados (total)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {"type": "linear"},
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          },
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "id": 5,
+      "options": {
+        "legend": {"calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "alias": "VUs",
+          "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+          "groupBy": [{"params": ["$__interval"], "type": "time"}, {"params": ["null"], "type": "fill"}],
+          "measurement": "vus",
+          "refId": "A",
+          "select": [[{"params": ["value"], "type": "field"}, {"params": [], "type": "max"}]]
+        },
+        {
+          "alias": "CRs creados/s",
+          "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+          "groupBy": [{"params": ["$__interval"], "type": "time"}, {"params": ["null"], "type": "fill"}],
+          "measurement": "chaos_load_crs_created",
+          "refId": "B",
+          "select": [[{"params": ["value"], "type": "field"}, {"params": [], "type": "sum"}, {"params": ["1s"], "type": "non_negative_derivative"}]]
+        }
+      ],
+      "title": "VUs y throughput de CRs creados",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "unit": "ms",
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 3000}]}
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "id": 6,
+      "options": {
+        "legend": {"calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "alias": "p95 reconcile_wait",
+          "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+          "groupBy": [{"params": ["$__interval"], "type": "time"}, {"params": ["null"], "type": "fill"}],
+          "measurement": "chaos_load_reconcile_wait_ms",
+          "refId": "A",
+          "select": [[{"params": ["value"], "type": "field"}, {"params": [95], "type": "percentile"}]]
+        },
+        {
+          "alias": "p99 reconcile_wait",
+          "datasource": {"type": "influxdb", "uid": "InfluxDB-k6"},
+          "groupBy": [{"params": ["$__interval"], "type": "time"}, {"params": ["null"], "type": "fill"}],
+          "measurement": "chaos_load_reconcile_wait_ms",
+          "refId": "B",
+          "select": [[{"params": ["value"], "type": "field"}, {"params": [99], "type": "percentile"}]]
+        }
+      ],
+      "title": "Latencia de reconciliación (k6)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "Prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never"},
+          "unit": "s",
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1.5}]}
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "id": 7,
+      "options": {
+        "legend": {"calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "Prometheus"},
+          "expr": "histogram_quantile(0.95, rate(chaos_reconciliation_duration_seconds_bucket[1m]))",
+          "legendFormat": "p95 reconciliation_duration (operator)",
+          "refId": "A"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "Prometheus"},
+          "expr": "histogram_quantile(0.99, rate(chaos_reconciliation_duration_seconds_bucket[1m]))",
+          "legendFormat": "p99 reconciliation_duration (operator)",
+          "refId": "B"
+        }
+      ],
+      "title": "Operator: latencia interna de reconciliación (Prometheus)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "Prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never"},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "id": 8,
+      "options": {
+        "legend": {"calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "Prometheus"},
+          "expr": "sum(chaos_experiments_active)",
+          "legendFormat": "Experimentos activos",
+          "refId": "A"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "Prometheus"},
+          "expr": "sum(rate(chaos_execution_errors_total[1m]))",
+          "legendFormat": "Errores/s del operator",
+          "refId": "B"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "Prometheus"},
+          "expr": "go_goroutines{job=~\"chaos-operator.*\"}",
+          "legendFormat": "Goroutines (leak detector)",
+          "refId": "C"
+        }
+      ],
+      "title": "Salud del operator durante el test",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["k6", "loadtest", "chaos-operator"],
+  "templating": {"list": []},
+  "time": {"from": "now-15m", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "k6 Load Tests — Chaos Operator",
+  "uid": "k6-chaos-loadtest",
+  "version": 1,
+  "weekStart": ""
+}

@@ -1,0 +1,87 @@
+# --------------------------------------------------------------------
+# Workload objetivo para pruebas de carga del Chaos Engineering Operator.
+# Aislado en su propio namespace 'chaos-load' para no afectar 'chaos-demo'
+# ni 'chaos-system'. Cada CR de carga selecciona ÚNICAMENTE pods con
+# label app=load-target en este namespace y aplica blastRadius MaxPods=1
+# para limitar el impacto.
+# --------------------------------------------------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: chaos-load
+  labels:
+    purpose: load-testing
+    chaos.engineering.io/protected: "false"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-target
+  namespace: chaos-load
+  labels:
+    app: load-target
+spec:
+  replicas: 50
+  selector:
+    matchLabels:
+      app: load-target
+  template:
+    metadata:
+      labels:
+        app: load-target
+        purpose: load-testing
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+        - name: nginx
+          image: nginx:1.27.1-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"
+            limits:
+              cpu: "50m"
+              memory: "32Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 1
+            periodSeconds: 2
+          # Pod security: alineado con las recomendaciones del operador
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 101
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+            - name: nginx-tmp
+              mountPath: /tmp
+      volumes:
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
+        - name: nginx-tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: load-target
+  namespace: chaos-load
+spec:
+  selector:
+    app: load-target
+  ports:
+    - port: 80
+      targetPort: 80

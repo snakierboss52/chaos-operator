@@ -1,0 +1,24 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: PodChaos
+metadata:
+  name: container-kill
+  namespace: chaos-demo
+  annotations:
+    # Rolling kill: elimina 2 pods fijos cada 5 minutos durante 20 minutos
+    chaos.engineering.io/wave-interval: "5m"
+    chaos.engineering.io/description: "Rolling kill — 2 pods fijos cada 5 min x 20 min"
+spec:
+  mode: fixed
+  value: "2"
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: nginx
+    podPhaseSelectors:
+      - Running
+  action: pod-kill
+  gracePeriod: 0
+  duration: "20m"
+  blastRadius:
+    maxPods: 2

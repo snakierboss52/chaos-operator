@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" font-family="-apple-system, 'Segoe UI', Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2E75B6"/>
+    </marker>
+    <marker id="arrow-aws" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#FF9900"/>
+    </marker>
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6B7280"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.12"/>
+    </filter>
+    <linearGradient id="awsCloud" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFF7ED"/>
+      <stop offset="100%" stop-color="#FED7AA"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="820" fill="#F8FAFC"/>
+
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" font-size="22" font-weight="700" fill="#1F3864">
+    Arquitectura de referencia — Chaos Operator en AWS EKS (producción)
+  </text>
+  <text x="600" y="62" text-anchor="middle" font-size="12" font-style="italic" fill="#6B7280">
+    Despliegue multi-AZ con managed control plane, observabilidad gestionada y aislamiento de blast radius
+  </text>
+
+  <!-- ============== Usuario externo / equipo SRE ============== -->
+  <rect x="30" y="100" width="180" height="320" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="30" y="100" width="180" height="32" rx="8" fill="#475569"/>
+  <text x="120" y="121" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Equipo SRE / DevOps</text>
+
+  <rect x="50" y="155" width="140" height="55" rx="6" fill="#DDEBF7" stroke="#2E75B6" stroke-width="1"/>
+  <text x="120" y="178" text-anchor="middle" font-size="12" font-weight="600" fill="#1F3864">CI/CD pipeline</text>
+  <text x="120" y="196" text-anchor="middle" font-size="10" fill="#475569">GitHub Actions / GitLab</text>
+
+  <rect x="50" y="225" width="140" height="55" rx="6" fill="#DDEBF7" stroke="#2E75B6" stroke-width="1"/>
+  <text x="120" y="248" text-anchor="middle" font-size="12" font-weight="600" fill="#1F3864">kubectl + IAM auth</text>
+  <text x="120" y="266" text-anchor="middle" font-size="10" fill="#475569">aws-iam-authenticator</text>
+
+  <rect x="50" y="295" width="140" height="55" rx="6" fill="#FCE4D6" stroke="#D97706" stroke-width="1"/>
+  <text x="120" y="318" text-anchor="middle" font-size="12" font-weight="600" fill="#92400E">Browser</text>
+  <text x="120" y="336" text-anchor="middle" font-size="10" fill="#92400E">Grafana vía ALB + SSO</text>
+
+  <rect x="50" y="365" width="140" height="40" rx="6" fill="#F3F4F6" stroke="#9CA3AF" stroke-width="1"/>
+  <text x="120" y="388" text-anchor="middle" font-size="11" fill="#374151">VPN corporativa</text>
+
+  <!-- Arrow user -> AWS -->
+  <line x1="210" y1="250" x2="270" y2="250" stroke="#2E75B6" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ============== AWS Cloud ============== -->
+  <rect x="250" y="100" width="920" height="660" rx="12" fill="url(#awsCloud)" stroke="#FF9900" stroke-width="2"/>
+  <rect x="250" y="100" width="920" height="36" rx="12" fill="#232F3E"/>
+  <text x="710" y="123" text-anchor="middle" font-size="14" font-weight="700" fill="#FF9900">AWS Cloud — Región us-east-1</text>
+
+  <!-- ECR (top-right of AWS) -->
+  <rect x="990" y="160" width="160" height="70" rx="6" fill="#FFFFFF" stroke="#FF9900" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="1070" y="180" text-anchor="middle" font-size="12" font-weight="700" fill="#232F3E">ECR</text>
+  <text x="1070" y="198" text-anchor="middle" font-size="10" fill="#475569">imágenes firmadas</text>
+  <text x="1070" y="212" text-anchor="middle" font-size="10" fill="#475569">scan + signing</text>
+  <text x="1070" y="225" text-anchor="middle" font-size="9" fill="#6B7280">supply chain</text>
+
+  <!-- S3 (right of AWS) -->
+  <rect x="990" y="245" width="160" height="70" rx="6" fill="#FFFFFF" stroke="#FF9900" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="1070" y="265" text-anchor="middle" font-size="12" font-weight="700" fill="#232F3E">S3</text>
+  <text x="1070" y="283" text-anchor="middle" font-size="10" fill="#475569">archivo histórico</text>
+  <text x="1070" y="297" text-anchor="middle" font-size="10" fill="#475569">HTML reports</text>
+  <text x="1070" y="310" text-anchor="middle" font-size="9" fill="#6B7280">cifrado SSE-S3 / KMS</text>
+
+  <!-- Secrets Manager -->
+  <rect x="990" y="330" width="160" height="60" rx="6" fill="#FFFFFF" stroke="#FF9900" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="1070" y="350" text-anchor="middle" font-size="12" font-weight="700" fill="#232F3E">Secrets Mgr</text>
+  <text x="1070" y="368" text-anchor="middle" font-size="10" fill="#475569">Grafana admin pwd</text>
+  <text x="1070" y="380" text-anchor="middle" font-size="9" fill="#6B7280">rotación automática</text>
+
+  <!-- CloudWatch -->
+  <rect x="990" y="405" width="160" height="70" rx="6" fill="#FFFFFF" stroke="#FF9900" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="1070" y="425" text-anchor="middle" font-size="12" font-weight="700" fill="#232F3E">CloudWatch</text>
+  <text x="1070" y="443" text-anchor="middle" font-size="10" fill="#475569">logs + alarms</text>
+  <text x="1070" y="457" text-anchor="middle" font-size="9" fill="#6B7280">SNS notification</text>
+  <text x="1070" y="470" text-anchor="middle" font-size="9" fill="#6B7280">→ Slack/PagerDuty</text>
+
+  <!-- IAM -->
+  <rect x="990" y="490" width="160" height="60" rx="6" fill="#FFFFFF" stroke="#FF9900" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="1070" y="510" text-anchor="middle" font-size="12" font-weight="700" fill="#232F3E">IAM + IRSA</text>
+  <text x="1070" y="528" text-anchor="middle" font-size="10" fill="#475569">SA → IAM Role</text>
+  <text x="1070" y="540" text-anchor="middle" font-size="9" fill="#6B7280">privilegios mínimos</text>
+
+  <!-- ============== VPC ============== -->
+  <rect x="280" y="160" width="690" height="580" rx="10" fill="#F0F4F8" stroke="#1F3864" stroke-width="2" stroke-dasharray="6,4"/>
+  <rect x="280" y="160" width="690" height="30" rx="10" fill="#1F3864"/>
+  <text x="625" y="181" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">
+    VPC privada — 10.0.0.0/16
+  </text>
+
+  <!-- ALB -->
+  <rect x="300" y="210" width="200" height="60" rx="6" fill="#FFFFFF" stroke="#FF9900" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="400" y="232" text-anchor="middle" font-size="12" font-weight="700" fill="#232F3E">Application Load Balancer</text>
+  <text x="400" y="251" text-anchor="middle" font-size="10" fill="#475569">TLS termination · OIDC/SSO</text>
+  <text x="400" y="264" text-anchor="middle" font-size="9" fill="#6B7280">subnet pública</text>
+
+  <line x1="210" y1="320" x2="300" y2="240" stroke="#FF9900" stroke-width="2" marker-end="url(#arrow-aws)"/>
+
+  <!-- EKS Control Plane (managed) -->
+  <rect x="520" y="210" width="430" height="60" rx="6" fill="#FFFFFF" stroke="#FF9900" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="735" y="232" text-anchor="middle" font-size="12" font-weight="700" fill="#232F3E">EKS Control Plane (managed)</text>
+  <text x="735" y="251" text-anchor="middle" font-size="10" fill="#475569">kube-apiserver · etcd · scheduler · controller-manager</text>
+  <text x="735" y="264" text-anchor="middle" font-size="9" fill="#6B7280">multi-AZ (SLA 99.95%) · gestionado por AWS</text>
+
+  <!-- AZ-1 -->
+  <rect x="300" y="295" width="320" height="430" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.2" filter="url(#shadow)"/>
+  <rect x="300" y="295" width="320" height="26" rx="8" fill="#475569"/>
+  <text x="460" y="313" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">AZ us-east-1a — subnet privada</text>
+
+  <text x="460" y="343" text-anchor="middle" font-size="10" font-weight="600" fill="#1F3864">EKS Managed Node Group (ASG)</text>
+
+  <rect x="315" y="355" width="290" height="100" rx="6" fill="#FEF3C7" stroke="#D97706" stroke-width="1"/>
+  <text x="460" y="372" text-anchor="middle" font-size="10" font-weight="700" fill="#92400E">ns: chaos-system</text>
+  <rect x="325" y="380" width="270" height="68" rx="4" fill="#FFFFFF" stroke="#D97706" stroke-width="0.8"/>
+  <text x="460" y="398" text-anchor="middle" font-size="12" font-weight="700" fill="#1F3864">Chaos Operator (2 réplicas)</text>
+  <text x="460" y="415" text-anchor="middle" font-size="10" fill="#475569">Leader election activa (HA)</text>
+  <text x="460" y="428" text-anchor="middle" font-size="10" fill="#475569">imagen tag pinneada @sha256</text>
+  <text x="460" y="441" text-anchor="middle" font-size="9" fill="#6B7280">PodSecurityPolicy/admission · NetworkPolicy</text>
+
+  <rect x="315" y="465" width="290" height="130" rx="6" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+  <text x="460" y="482" text-anchor="middle" font-size="10" font-weight="700" fill="#3730A3">ns: monitoring</text>
+  <rect x="325" y="490" width="130" height="48" rx="4" fill="#FFFFFF" stroke="#EA580C" stroke-width="0.8"/>
+  <text x="390" y="508" text-anchor="middle" font-size="11" font-weight="700" fill="#1F3864">Prometheus</text>
+  <text x="390" y="523" text-anchor="middle" font-size="9" fill="#475569">remote-write → AMP</text>
+  <rect x="465" y="490" width="130" height="48" rx="4" fill="#FFFFFF" stroke="#06B6D4" stroke-width="0.8"/>
+  <text x="530" y="508" text-anchor="middle" font-size="11" font-weight="700" fill="#1F3864">InfluxDB</text>
+  <text x="530" y="523" text-anchor="middle" font-size="9" fill="#475569">o AMP equivalente</text>
+  <rect x="325" y="548" width="270" height="38" rx="4" fill="#FFFFFF" stroke="#F59E0B" stroke-width="0.8"/>
+  <text x="460" y="566" text-anchor="middle" font-size="11" font-weight="700" fill="#1F3864">Grafana (Amazon Managed Grafana)</text>
+  <text x="460" y="580" text-anchor="middle" font-size="9" fill="#6B7280">SSO + workspace IAM</text>
+
+  <rect x="315" y="605" width="290" height="105" rx="6" fill="#DCFCE7" stroke="#16A34A" stroke-width="1"/>
+  <text x="460" y="622" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">ns: chaos-experiments</text>
+  <rect x="325" y="630" width="270" height="72" rx="4" fill="#FFFFFF" stroke="#16A34A" stroke-width="0.8"/>
+  <text x="460" y="648" text-anchor="middle" font-size="12" font-weight="700" fill="#1F3864">Workloads bajo prueba</text>
+  <text x="460" y="664" text-anchor="middle" font-size="10" fill="#475569">microservicios productivos seleccionados</text>
+  <text x="460" y="678" text-anchor="middle" font-size="10" fill="#475569">selector estricto + blastRadius</text>
+  <text x="460" y="694" text-anchor="middle" font-size="9" fill="#6B7280">excluye namespaces críticos (allowlist)</text>
+
+  <!-- AZ-2 -->
+  <rect x="640" y="295" width="310" height="430" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.2" filter="url(#shadow)"/>
+  <rect x="640" y="295" width="310" height="26" rx="8" fill="#475569"/>
+  <text x="795" y="313" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">AZ us-east-1b — subnet privada</text>
+
+  <text x="795" y="343" text-anchor="middle" font-size="10" font-weight="600" fill="#1F3864">EKS Managed Node Group (ASG)</text>
+
+  <rect x="655" y="355" width="280" height="80" rx="6" fill="#FEF3C7" stroke="#D97706" stroke-width="1"/>
+  <text x="795" y="372" text-anchor="middle" font-size="10" font-weight="700" fill="#92400E">ns: chaos-system (réplica)</text>
+  <rect x="665" y="380" width="260" height="48" rx="4" fill="#FFFFFF" stroke="#D97706" stroke-width="0.8"/>
+  <text x="795" y="398" text-anchor="middle" font-size="12" font-weight="700" fill="#1F3864">Chaos Operator (réplica HA)</text>
+  <text x="795" y="415" text-anchor="middle" font-size="10" fill="#475569">standby vía leader election lease</text>
+
+  <rect x="655" y="445" width="280" height="80" rx="6" fill="#DCFCE7" stroke="#16A34A" stroke-width="1"/>
+  <text x="795" y="462" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">ns: chaos-experiments (réplicas)</text>
+  <rect x="665" y="470" width="260" height="48" rx="4" fill="#FFFFFF" stroke="#16A34A" stroke-width="0.8"/>
+  <text x="795" y="488" text-anchor="middle" font-size="12" font-weight="700" fill="#1F3864">Workloads bajo prueba</text>
+  <text x="795" y="505" text-anchor="middle" font-size="10" fill="#475569">distribuidos por anti-affinity</text>
+
+  <rect x="655" y="535" width="280" height="100" rx="6" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+  <text x="795" y="552" text-anchor="middle" font-size="10" font-weight="700" fill="#3730A3">ns: monitoring (réplica)</text>
+  <text x="795" y="572" text-anchor="middle" font-size="11" fill="#475569">Prometheus federation</text>
+  <text x="795" y="589" text-anchor="middle" font-size="11" fill="#475569">InfluxDB cluster</text>
+  <text x="795" y="606" text-anchor="middle" font-size="11" fill="#475569">Grafana data plane</text>
+  <text x="795" y="623" text-anchor="middle" font-size="9" fill="#6B7280">PVC EBS gp3 cifrado KMS</text>
+
+  <rect x="655" y="645" width="280" height="70" rx="6" fill="#FCE7F3" stroke="#DB2777" stroke-width="1"/>
+  <text x="795" y="662" text-anchor="middle" font-size="10" font-weight="700" fill="#9F1239">ns: chaos-system protegido por:</text>
+  <text x="795" y="680" text-anchor="middle" font-size="10" fill="#475569">NetworkPolicy egress allowlist</text>
+  <text x="795" y="694" text-anchor="middle" font-size="10" fill="#475569">PSP/PodSecurity restricted</text>
+  <text x="795" y="708" text-anchor="middle" font-size="9" fill="#6B7280">RBAC con kyverno/OPA</text>
+
+  <!-- Connections inside VPC -->
+  <!-- ALB → Grafana -->
+  <line x1="400" y1="270" x2="400" y2="548" stroke="#FF9900" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-aws)"/>
+  <text x="320" y="420" font-size="9" fill="#FF9900" font-style="italic" transform="rotate(-90, 320, 420)">/grafana via ALB</text>
+
+  <!-- Operator → control plane -->
+  <line x1="460" y1="380" x2="640" y2="240" stroke="#2E75B6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="555" y="305" font-size="9" fill="#2E75B6">watch CRs</text>
+
+  <!-- ECR -> Operator (image pull via IRSA) -->
+  <line x1="990" y1="200" x2="600" y2="395" stroke="#FF9900" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.6"/>
+  <text x="780" y="285" font-size="9" fill="#FF9900" font-style="italic">imagen vía IRSA</text>
+
+  <!-- Operator → CloudWatch logs -->
+  <line x1="600" y1="425" x2="990" y2="430" stroke="#FF9900" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-aws)"/>
+  <text x="780" y="418" font-size="9" fill="#EA580C" font-style="italic">logs JSON</text>
+
+  <!-- S3 ← reports archive -->
+  <line x1="600" y1="640" x2="990" y2="280" stroke="#FF9900" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.45" marker-end="url(#arrow-aws)"/>
+  <text x="850" y="475" font-size="9" fill="#FF9900" font-style="italic">archive (CronJob)</text>
+
+  <!-- Secrets Manager → Grafana -->
+  <line x1="990" y1="360" x2="600" y2="567" stroke="#FF9900" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.45"/>
+  <text x="820" y="448" font-size="9" fill="#FF9900" font-style="italic">External Secrets Op</text>
+
+  <!-- Legend -->
+  <rect x="30" y="775" width="1140" height="38" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="50" y="797" font-size="10" font-weight="600" fill="#475569">Diferencias clave vs kind local:</text>
+  <text x="220" y="797" font-size="10" fill="#475569">·  control plane gestionado (EKS)</text>
+  <text x="410" y="797" font-size="10" fill="#475569">·  2 réplicas operator + leader election (HA)</text>
+  <text x="660" y="797" font-size="10" fill="#475569">·  acceso vía ALB + SSO (no port-forward)</text>
+  <text x="920" y="797" font-size="10" fill="#475569">·  IRSA + Secrets Mgr (no admin/admin)</text>
+</svg>

@@ -1,0 +1,19 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: network-delay
+  namespace: chaos-demo
+spec:
+  mode: all
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: apache-target
+  action: delay
+  direction: both
+  delay:
+    latency: "100ms"
+    jitter: "10ms"
+    correlation: "25"
+  duration: "10m"

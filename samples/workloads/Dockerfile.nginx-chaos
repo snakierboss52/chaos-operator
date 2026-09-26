@@ -1,0 +1,8 @@
+FROM nginx:1.25-alpine
+
+# Pre-instalar herramientas de red para chaos engineering
+# (iproute2 = tc netem, iptables)
+RUN apk add --no-cache iproute2 iptables
+
+# Verificar instalación
+RUN tc -Version && iptables --version

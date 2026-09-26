@@ -1,0 +1,24 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: StressChaos
+metadata:
+  name: combined-stress
+  namespace: chaos-demo
+spec:
+  # 50% de pods (3 de 6) con stress combinado agresivo CPU + memoria
+  mode: fixed-percent
+  value: "50"
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: nginx
+  stressors:
+    cpu:
+      workers: 3
+      load: 100
+    memory:
+      workers: 2
+      size: "64MB"
+  duration: "15m"
+  blastRadius:
+    maxPods: 3

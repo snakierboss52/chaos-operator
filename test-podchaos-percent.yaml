@@ -1,0 +1,18 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: PodChaos
+metadata:
+  name: kill-percent
+  namespace: chaos-demo
+spec:
+  mode: fixed-percent
+  value: "40"
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: nginx
+  action: pod-kill
+  duration: "1m"
+  blastRadius:
+    maxPods: 2
+    maxPercentage: 50

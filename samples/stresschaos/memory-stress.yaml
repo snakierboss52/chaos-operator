@@ -1,0 +1,23 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: StressChaos
+metadata:
+  name: memory-stress
+  namespace: chaos-demo
+spec:
+  # 3 pods fijos con 2 workers de 96MB cada uno = 192MB por pod
+  mode: fixed
+  value: "3"
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: nginx
+  stressors:
+    memory:
+      workers: 2
+      size: "96MB"
+  containerNames:
+    - nginx
+  duration: "15m"
+  blastRadius:
+    maxPods: 3

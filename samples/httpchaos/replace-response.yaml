@@ -1,0 +1,23 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: HTTPChaos
+metadata:
+  name: replace-response
+  namespace: chaos-demo
+spec:
+  mode: one
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: nginx
+  target: Response
+  port: 80
+  path: "/*"
+  replace:
+    statusCode: 200
+    body: '{"chaos": true, "message": "Response replaced by chaos experiment"}'
+    headers:
+      Content-Type: "application/json"
+      X-Chaos-Injected: "true"
+    percentage: 10
+  duration: "5m"

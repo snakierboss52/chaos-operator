@@ -1,0 +1,134 @@
+# --------------------------------------------------------------------
+# nginx alpine sirviendo los HTML reports de pruebas de carga.
+#
+# Modelo de seguridad:
+#   - Service ClusterIP (no expone fuera del cluster).
+#   - Acceso desde host vía 'kubectl port-forward localhost:8088'.
+#   - Pod corre como non-root (uid 101 = nginx user en alpine).
+#   - readOnlyRootFilesystem + emptyDirs en los paths que nginx necesita escribir.
+#   - capabilities drop ALL.
+#   - Los HTML servidos no contienen credenciales (validado en lib/report.js).
+# --------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reports-nginx-config
+  namespace: monitoring
+data:
+  default.conf: |
+    server {
+      listen 8080 default_server;
+      server_name _;
+      root /usr/share/nginx/html;
+      autoindex off;
+
+      # Defense-in-depth: solo permite GET/HEAD; nada de uploads ni
+      # writes contra el server estático.
+      if ($request_method !~ ^(GET|HEAD)$) {
+        return 405;
+      }
+
+      location / {
+        try_files $uri $uri/ /index.html =404;
+        add_header X-Content-Type-Options nosniff;
+        add_header X-Frame-Options DENY;
+        add_header Referrer-Policy no-referrer;
+      }
+
+      location /health {
+        access_log off;
+        return 200 "ok\n";
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadtest-reports
+  namespace: monitoring
+  labels:
+    app: loadtest-reports
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loadtest-reports
+  template:
+    metadata:
+      labels:
+        app: loadtest-reports
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+      containers:
+        - name: nginx
+          # Versión non-root oficial de NGINX, pinneada a patch inmutable.
+          image: nginxinc/nginx-unprivileged:1.27.1-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+            - name: html
+              mountPath: /usr/share/nginx/html
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: reports-nginx-config
+        - name: html
+          emptyDir:
+            sizeLimit: 100Mi
+        - name: cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loadtest-reports
+  namespace: monitoring
+  labels:
+    app: loadtest-reports
+spec:
+  type: ClusterIP
+  selector:
+    app: loadtest-reports
+  ports:
+    - name: http
+      port: 8088
+      targetPort: 8080

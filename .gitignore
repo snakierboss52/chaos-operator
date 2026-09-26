@@ -1,0 +1,39 @@
+# Binaries
+bin/
+/manager
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build output
+build/
+dist/
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.claude/
+
+# Local office documents and project artifacts
+*.docx
+*.xlsx
+*.pptx
+
+# Go
+/vendor/
+.DS_Store
+
+# Kubernetes local config
+.kube/
+
+# Logs
+*.log
+
+# Temporary files
+**/.DS_Store
+**/*~
+**/#*#
+**/.#*

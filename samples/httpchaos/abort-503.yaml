@@ -1,0 +1,22 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: HTTPChaos
+metadata:
+  name: http-abort-503
+  namespace: chaos-demo
+spec:
+  mode: fixed-percent
+  value: "33"
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: nginx
+  target: Request
+  port: 80
+  method: GET
+  path: "/*"
+  abort:
+    statusCode: 503
+    percentage: 25
+    body: '{"error": "Service Temporarily Unavailable"}'
+  duration: "5m"

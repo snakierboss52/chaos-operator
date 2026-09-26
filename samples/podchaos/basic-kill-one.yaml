@@ -1,0 +1,21 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: PodChaos
+metadata:
+  name: basic-kill-one
+  namespace: chaos-demo
+  annotations:
+    # Mata 1 pod aleatorio cada 2 minutos durante 20 minutos
+    chaos.engineering.io/wave-interval: "2m"
+    chaos.engineering.io/description: "Sniper — 1 pod random cada 2 min x 20 min"
+spec:
+  mode: one
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: nginx
+    podPhaseSelectors:
+      - Running
+  action: pod-kill
+  gracePeriod: 0
+  duration: "20m"

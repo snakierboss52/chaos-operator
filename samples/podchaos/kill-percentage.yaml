@@ -1,0 +1,25 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: PodChaos
+metadata:
+  name: kill-percentage
+  namespace: chaos-demo
+  annotations:
+    # Mata 2 pods (33%) cada 3 minutos durante 20 minutos
+    chaos.engineering.io/wave-interval: "3m"
+    chaos.engineering.io/description: "Shotgun — 2 pods cada 3 min x 20 min"
+spec:
+  mode: fixed-percent
+  value: "33"
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: nginx
+    podPhaseSelectors:
+      - Running
+  action: pod-kill
+  gracePeriod: 0
+  duration: "20m"
+  blastRadius:
+    maxPods: 2
+    maxPercentage: 34

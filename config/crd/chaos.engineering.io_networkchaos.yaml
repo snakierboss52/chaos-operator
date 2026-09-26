@@ -1,0 +1,449 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: networkchaos.chaos.engineering.io
+spec:
+  group: chaos.engineering.io
+  names:
+    kind: NetworkChaos
+    listKind: NetworkChaosList
+    plural: networkchaos
+    shortNames:
+    - nc
+    singular: networkchaos
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.action
+      name: Action
+      type: string
+    - jsonPath: .spec.mode
+      name: Mode
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NetworkChaos is the Schema for the networkchaos API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NetworkChaosSpec defines the desired state of NetworkChaos
+            properties:
+              action:
+                description: Action defines the network chaos action
+                enum:
+                - delay
+                - loss
+                - duplicate
+                - corrupt
+                - partition
+                - bandwidth
+                type: string
+              bandwidth:
+                description: |-
+                  Bandwidth specifies the bandwidth limitation parameters
+                  Only applicable when action is 'bandwidth'
+                properties:
+                  buffer:
+                    description: Buffer defines the maximum size of the bucket (bytes)
+                    format: int32
+                    type: integer
+                  limit:
+                    description: Limit defines the buffer size (bytes)
+                    format: int32
+                    type: integer
+                  rate:
+                    description: Rate defines the bandwidth rate limit (e.g., "1mbps",
+                      "100kbps")
+                    type: string
+                required:
+                - rate
+                type: object
+              blastRadius:
+                description: BlastRadius defines limits for the chaos experiment
+                properties:
+                  maxPercentage:
+                    description: MaxPercentage is the maximum percentage of pods that
+                      can be affected (0-100)
+                    format: int32
+                    maximum: 100
+                    minimum: 0
+                    type: integer
+                  maxPods:
+                    description: MaxPods is the maximum number of pods that can be
+                      affected
+                    format: int32
+                    type: integer
+                type: object
+              corrupt:
+                description: |-
+                  Corrupt specifies the packet corruption parameters
+                  Only applicable when action is 'corrupt'
+                properties:
+                  correlation:
+                    description: Correlation defines the correlation between successive
+                      corrupted packets (0-100)
+                    type: string
+                  corrupt:
+                    description: Corrupt defines the percentage of packets to corrupt
+                      (0-100)
+                    type: string
+                required:
+                - corrupt
+                type: object
+              delay:
+                description: |-
+                  Delay specifies the delay parameters
+                  Only applicable when action is 'delay'
+                properties:
+                  correlation:
+                    description: Correlation defines the correlation between successive
+                      delay values (0-100)
+                    type: string
+                  jitter:
+                    description: Jitter defines the variation in latency (e.g., "10ms")
+                    type: string
+                  latency:
+                    description: Latency defines the latency to add (e.g., "100ms",
+                      "1s")
+                    type: string
+                required:
+                - latency
+                type: object
+              direction:
+                description: Direction defines the traffic direction to apply chaos
+                enum:
+                - from
+                - to
+                - both
+                type: string
+              duplicate:
+                description: |-
+                  Duplicate specifies the packet duplication parameters
+                  Only applicable when action is 'duplicate'
+                properties:
+                  correlation:
+                    description: Correlation defines the correlation between successive
+                      duplicated packets (0-100)
+                    type: string
+                  duplicate:
+                    description: Duplicate defines the percentage of packets to duplicate
+                      (0-100)
+                    type: string
+                required:
+                - duplicate
+                type: object
+              duration:
+                description: Duration defines how long the chaos will last
+                type: string
+              externalTargets:
+                description: ExternalTargets defines external hosts/IPs to apply chaos
+                  to
+                items:
+                  type: string
+                type: array
+              loss:
+                description: |-
+                  Loss specifies the packet loss parameters
+                  Only applicable when action is 'loss'
+                properties:
+                  correlation:
+                    description: Correlation defines the correlation between successive
+                      lost packets (0-100)
+                    type: string
+                  loss:
+                    description: Loss defines the percentage of packets to lose (0-100)
+                    type: string
+                required:
+                - loss
+                type: object
+              mode:
+                description: Mode defines the mode to select target pods
+                enum:
+                - one
+                - all
+                - fixed
+                - fixed-percent
+                - random-max-percent
+                type: string
+              scheduler:
+                description: Scheduler defines when to run the chaos experiment
+                properties:
+                  cron:
+                    description: Cron defines a cron expression for scheduled chaos
+                    type: string
+                type: object
+              selector:
+                description: Selector defines how to select target pods
+                properties:
+                  fieldSelectors:
+                    additionalProperties:
+                      type: string
+                    description: FieldSelectors is a map of {key,value} pairs to match
+                      fields
+                    type: object
+                  labelSelectors:
+                    additionalProperties:
+                      type: string
+                    description: LabelSelectors is a map of {key,value} pairs to match
+                      labels
+                    type: object
+                  namespaces:
+                    description: Namespaces is a list of target namespaces
+                    items:
+                      type: string
+                    type: array
+                  nodeSelectors:
+                    additionalProperties:
+                      type: string
+                    description: NodeSelectors is a map of {key,value} pairs to match
+                      node labels
+                    type: object
+                  podPhaseSelectors:
+                    description: PodPhaseSelectors restricts the phase of pods
+                    items:
+                      type: string
+                    type: array
+                  pods:
+                    description: Pods is a list of pod names to select
+                    items:
+                      type: string
+                    type: array
+                type: object
+              target:
+                description: |-
+                  Target defines the target of the network chaos
+                  If not specified, all network traffic is affected
+                properties:
+                  mode:
+                    description: Mode defines the mode to select target pods
+                    enum:
+                    - one
+                    - all
+                    - fixed
+                    - fixed-percent
+                    - random-max-percent
+                    type: string
+                  selector:
+                    description: Selector defines how to select target pods
+                    properties:
+                      fieldSelectors:
+                        additionalProperties:
+                          type: string
+                        description: FieldSelectors is a map of {key,value} pairs
+                          to match fields
+                        type: object
+                      labelSelectors:
+                        additionalProperties:
+                          type: string
+                        description: LabelSelectors is a map of {key,value} pairs
+                          to match labels
+                        type: object
+                      namespaces:
+                        description: Namespaces is a list of target namespaces
+                        items:
+                          type: string
+                        type: array
+                      nodeSelectors:
+                        additionalProperties:
+                          type: string
+                        description: NodeSelectors is a map of {key,value} pairs to
+                          match node labels
+                        type: object
+                      podPhaseSelectors:
+                        description: PodPhaseSelectors restricts the phase of pods
+                        items:
+                          type: string
+                        type: array
+                      pods:
+                        description: Pods is a list of pod names to select
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  value:
+                    description: Value provides a parameter for the mode
+                    type: string
+                type: object
+              value:
+                description: Value provides a parameter for the mode
+                type: string
+            required:
+            - action
+            - mode
+            - selector
+            type: object
+          status:
+            description: NetworkChaosStatus defines the observed state of NetworkChaos
+            properties:
+              affectedPods:
+                description: AffectedPods is the list of pods currently affected by
+                  the chaos
+                items:
+                  type: string
+                type: array
+              completionTime:
+                description: CompletionTime is when the chaos experiment completed
+                format: date-time
+                type: string
+              conditions:
+                description: Conditions represent the latest available observations
+                  of the chaos experiment
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              message:
+                description: Message provides additional information about the current
+                  state
+                type: string
+              observedGeneration:
+                description: ObservedGeneration reflects the generation most recently
+                  observed by the controller
+                format: int64
+                type: integer
+              phase:
+                description: Phase represents the current phase of the chaos experiment
+                enum:
+                - Pending
+                - Running
+                - Completed
+                - Failed
+                - Stopped
+                type: string
+              result:
+                description: Result contains the detailed experiment result
+                properties:
+                  blastRadiusLimited:
+                    description: BlastRadiusLimited indicates if blast radius controls
+                      reduced the target set
+                    type: boolean
+                  failedTargets:
+                    description: FailedTargets is how many pods failed to be affected
+                    type: integer
+                  successfulTargets:
+                    description: SuccessfulTargets is how many pods were successfully
+                      affected
+                    type: integer
+                  targetResults:
+                    description: TargetResults contains per-pod results
+                    items:
+                      description: TargetResult captures the result for a single target
+                        pod
+                      properties:
+                        appliedAt:
+                          description: AppliedAt is when the chaos was applied to
+                            this pod
+                          format: date-time
+                          type: string
+                        error:
+                          description: Error contains the error message if the chaos
+                            failed
+                          type: string
+                        name:
+                          description: Name is the pod name (namespace/name)
+                          type: string
+                        success:
+                          description: Success indicates if the chaos was applied
+                            successfully
+                          type: boolean
+                      required:
+                      - appliedAt
+                      - name
+                      - success
+                      type: object
+                    type: array
+                  totalTargets:
+                    description: TotalTargets is how many pods were targeted
+                    type: integer
+                required:
+                - failedTargets
+                - successfulTargets
+                - totalTargets
+                type: object
+              startTime:
+                description: StartTime is when the chaos experiment started
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,5 @@
+# Binario k6 con xk6-kubernetes (reconstruir con `make load-bin`).
+bin/
+# Resultados de corridas (no se versionan).
+results/*
+!results/.gitkeep

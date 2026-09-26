@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" font-family="-apple-system, 'Segoe UI', Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2E75B6"/>
+    </marker>
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6B7280"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="820" fill="#F8FAFC"/>
+
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" font-size="22" font-weight="700" fill="#1F3864">
+    Arquitectura desplegada — Chaos Engineering Operator (entorno kind local)
+  </text>
+  <text x="600" y="62" text-anchor="middle" font-size="12" font-style="italic" fill="#6B7280">
+    Vista de alto nivel del stack en cluster chaos-testing-v2 (3 nodos)
+  </text>
+
+  <!-- ============== Developer host (izquierda) ============== -->
+  <rect x="30" y="100" width="220" height="660" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="30" y="100" width="220" height="32" rx="8" fill="#475569"/>
+  <text x="140" y="121" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Host del desarrollador</text>
+
+  <!-- kubectl -->
+  <rect x="55" y="160" width="170" height="60" rx="6" fill="#DDEBF7" stroke="#2E75B6" stroke-width="1.5"/>
+  <text x="140" y="183" text-anchor="middle" font-size="13" font-weight="600" fill="#1F3864">kubectl</text>
+  <text x="140" y="202" text-anchor="middle" font-size="11" fill="#475569">apply / get / describe</text>
+
+  <!-- k6 + xk6-kubernetes -->
+  <rect x="55" y="240" width="170" height="80" rx="6" fill="#DDEBF7" stroke="#2E75B6" stroke-width="1.5"/>
+  <text x="140" y="263" text-anchor="middle" font-size="13" font-weight="600" fill="#1F3864">k6</text>
+  <text x="140" y="282" text-anchor="middle" font-size="11" fill="#475569">+ xk6-kubernetes</text>
+  <text x="140" y="299" text-anchor="middle" font-size="10" fill="#6B7280">streaming → InfluxDB</text>
+  <text x="140" y="312" text-anchor="middle" font-size="10" fill="#6B7280">JSON+HTML+MD reports</text>
+
+  <!-- Make -->
+  <rect x="55" y="340" width="170" height="60" rx="6" fill="#DDEBF7" stroke="#2E75B6" stroke-width="1.5"/>
+  <text x="140" y="363" text-anchor="middle" font-size="13" font-weight="600" fill="#1F3864">Makefile</text>
+  <text x="140" y="382" text-anchor="middle" font-size="11" fill="#475569">orquestación de targets</text>
+
+  <!-- Browser (Grafana / Reports) -->
+  <rect x="55" y="430" width="170" height="80" rx="6" fill="#FCE4D6" stroke="#D97706" stroke-width="1.5"/>
+  <text x="140" y="453" text-anchor="middle" font-size="13" font-weight="600" fill="#92400E">Browser</text>
+  <text x="140" y="472" text-anchor="middle" font-size="11" fill="#92400E">Grafana :3000</text>
+  <text x="140" y="486" text-anchor="middle" font-size="11" fill="#92400E">Prometheus :9090</text>
+  <text x="140" y="500" text-anchor="middle" font-size="11" fill="#92400E">Reports :8088</text>
+
+  <!-- Docker -->
+  <rect x="55" y="540" width="170" height="80" rx="6" fill="#F3F4F6" stroke="#9CA3AF" stroke-width="1.5"/>
+  <text x="140" y="563" text-anchor="middle" font-size="13" font-weight="600" fill="#374151">Docker daemon</text>
+  <text x="140" y="582" text-anchor="middle" font-size="11" fill="#6B7280">imágenes cacheadas</text>
+  <text x="140" y="596" text-anchor="middle" font-size="11" fill="#6B7280">kind load image-archive</text>
+
+  <text x="140" y="650" text-anchor="middle" font-size="11" font-style="italic" fill="#6B7280">port-forward = único</text>
+  <text x="140" y="664" text-anchor="middle" font-size="11" font-style="italic" fill="#6B7280">puente al cluster</text>
+
+  <!-- Arrow host -> cluster API server -->
+  <line x1="250" y1="190" x2="370" y2="190" stroke="#2E75B6" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="250" y1="280" x2="370" y2="280" stroke="#2E75B6" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="250" y1="470" x2="370" y2="470" stroke="#D97706" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+
+  <!-- ============== Cluster kind ============== -->
+  <rect x="290" y="100" width="880" height="660" rx="10" fill="#F0F4F8" stroke="#1F3864" stroke-width="2" stroke-dasharray="6,4"/>
+  <rect x="290" y="100" width="880" height="36" rx="10" fill="#1F3864"/>
+  <text x="730" y="123" text-anchor="middle" font-size="14" font-weight="700" fill="#FFFFFF">
+    Cluster Kubernetes — kind chaos-testing-v2  (1 control-plane + 2 workers)
+  </text>
+
+  <!-- Control plane -->
+  <rect x="330" y="160" width="350" height="120" rx="8" fill="#FFFFFF" stroke="#1F3864" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="330" y="160" width="350" height="28" rx="8" fill="#1F3864"/>
+  <text x="505" y="178" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">Control plane (kube-apiserver)</text>
+  <!-- CRDs -->
+  <rect x="345" y="200" width="320" height="70" rx="4" fill="#EEF2FF" stroke="#6366F1" stroke-width="1"/>
+  <text x="505" y="218" text-anchor="middle" font-size="11" font-weight="600" fill="#4F46E5">CustomResourceDefinitions registrados</text>
+  <text x="505" y="235" text-anchor="middle" font-size="10" fill="#3730A3">chaos.engineering.io/v1alpha1</text>
+  <text x="505" y="252" text-anchor="middle" font-size="11" font-weight="600" fill="#4F46E5">
+    PodChaos · NetworkChaos · StressChaos · HTTPChaos
+  </text>
+
+  <!-- Webhook -->
+  <rect x="700" y="160" width="220" height="120" rx="8" fill="#FFFFFF" stroke="#16A34A" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="700" y="160" width="220" height="28" rx="8" fill="#16A34A"/>
+  <text x="810" y="178" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">Admission Webhook</text>
+  <text x="810" y="208" text-anchor="middle" font-size="11" fill="#166534">Mutating (Defaulter)</text>
+  <text x="810" y="226" text-anchor="middle" font-size="11" fill="#166534">Validating (Validator)</text>
+  <text x="810" y="244" text-anchor="middle" font-size="10" fill="#475569">TLS :9443</text>
+  <text x="810" y="262" text-anchor="middle" font-size="10" fill="#475569">defaults + rechazo de specs inválidos</text>
+
+  <line x1="700" y1="220" x2="680" y2="220" stroke="#16A34A" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+
+  <!-- Worker A: chaos-system + chaos-load -->
+  <rect x="330" y="310" width="395" height="200" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.2" filter="url(#shadow)"/>
+  <rect x="330" y="310" width="395" height="24" rx="8" fill="#475569"/>
+  <text x="527" y="326" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">Worker node 1</text>
+
+  <!-- Namespace chaos-system -->
+  <rect x="345" y="345" width="180" height="150" rx="6" fill="#FEF3C7" stroke="#D97706" stroke-width="1.2"/>
+  <text x="435" y="362" text-anchor="middle" font-size="10" font-weight="700" fill="#92400E">ns: chaos-system</text>
+  <rect x="355" y="370" width="160" height="115" rx="4" fill="#FFFFFF" stroke="#D97706" stroke-width="1"/>
+  <text x="435" y="389" text-anchor="middle" font-size="12" font-weight="700" fill="#1F3864">Chaos Operator</text>
+  <text x="435" y="406" text-anchor="middle" font-size="10" fill="#475569">controller-runtime</text>
+  <text x="435" y="420" text-anchor="middle" font-size="10" fill="#475569">4 reconcilers</text>
+  <text x="435" y="438" text-anchor="middle" font-size="10" fill="#475569">/metrics :8080</text>
+  <text x="435" y="452" text-anchor="middle" font-size="10" fill="#475569">/healthz :8081</text>
+  <text x="435" y="466" text-anchor="middle" font-size="10" fill="#6B7280">non-root · RO fs</text>
+  <text x="435" y="479" text-anchor="middle" font-size="10" fill="#6B7280">RBAC mínimo</text>
+
+  <!-- Namespace chaos-load -->
+  <rect x="540" y="345" width="170" height="150" rx="6" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.2"/>
+  <text x="625" y="362" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">ns: chaos-load</text>
+  <rect x="550" y="370" width="150" height="115" rx="4" fill="#FFFFFF" stroke="#16A34A" stroke-width="1"/>
+  <text x="625" y="389" text-anchor="middle" font-size="12" font-weight="700" fill="#1F3864">load-target</text>
+  <text x="625" y="406" text-anchor="middle" font-size="10" fill="#475569">Deployment nginx</text>
+  <text x="625" y="420" text-anchor="middle" font-size="10" fill="#475569">50 réplicas</text>
+  <text x="625" y="438" text-anchor="middle" font-size="10" fill="#6B7280">label: app=load-target</text>
+  <text x="625" y="462" text-anchor="middle" font-size="10" font-style="italic" fill="#16A34A">workload bajo</text>
+  <text x="625" y="475" text-anchor="middle" font-size="10" font-style="italic" fill="#16A34A">prueba de carga</text>
+
+  <!-- Worker B: monitoring -->
+  <rect x="745" y="310" width="395" height="430" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.2" filter="url(#shadow)"/>
+  <rect x="745" y="310" width="395" height="24" rx="8" fill="#475569"/>
+  <text x="942" y="326" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">Worker node 2</text>
+
+  <!-- Namespace monitoring -->
+  <rect x="760" y="345" width="365" height="380" rx="6" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1.2"/>
+  <text x="942" y="362" text-anchor="middle" font-size="10" font-weight="700" fill="#3730A3">ns: monitoring</text>
+
+  <!-- Prometheus -->
+  <rect x="775" y="375" width="160" height="80" rx="4" fill="#FFFFFF" stroke="#EA580C" stroke-width="1"/>
+  <text x="855" y="394" text-anchor="middle" font-size="12" font-weight="700" fill="#1F3864">Prometheus</text>
+  <text x="855" y="412" text-anchor="middle" font-size="10" fill="#475569">scrape :9090</text>
+  <text x="855" y="426" text-anchor="middle" font-size="10" fill="#475569">métricas operator</text>
+  <text x="855" y="440" text-anchor="middle" font-size="10" fill="#475569">+ kubelet (cAdvisor)</text>
+
+  <!-- InfluxDB -->
+  <rect x="945" y="375" width="170" height="80" rx="4" fill="#FFFFFF" stroke="#06B6D4" stroke-width="1"/>
+  <text x="1030" y="394" text-anchor="middle" font-size="12" font-weight="700" fill="#1F3864">InfluxDB v1.8</text>
+  <text x="1030" y="412" text-anchor="middle" font-size="10" fill="#475569">DB: k6</text>
+  <text x="1030" y="426" text-anchor="middle" font-size="10" fill="#475569">retention 2w</text>
+  <text x="1030" y="440" text-anchor="middle" font-size="10" fill="#6B7280">backend k6 streaming</text>
+
+  <!-- Grafana -->
+  <rect x="775" y="475" width="340" height="100" rx="4" fill="#FFFFFF" stroke="#F59E0B" stroke-width="1"/>
+  <text x="945" y="495" text-anchor="middle" font-size="13" font-weight="700" fill="#1F3864">Grafana</text>
+  <text x="945" y="513" text-anchor="middle" font-size="10" fill="#475569">datasources: Prometheus + InfluxDB-k6</text>
+  <text x="945" y="528" text-anchor="middle" font-size="10" fill="#475569">5 dashboards (provisioning declarativo)</text>
+  <text x="945" y="542" text-anchor="middle" font-size="10" fill="#475569">incluye "k6 Load Tests — Chaos Operator"</text>
+  <text x="945" y="560" text-anchor="middle" font-size="10" fill="#6B7280">:3000  (admin/admin local)</text>
+
+  <!-- Reports server -->
+  <rect x="775" y="595" width="340" height="120" rx="4" fill="#FFFFFF" stroke="#0EA5E9" stroke-width="1"/>
+  <text x="945" y="615" text-anchor="middle" font-size="13" font-weight="700" fill="#1F3864">Reports server (nginx)</text>
+  <text x="945" y="633" text-anchor="middle" font-size="10" fill="#475569">sirve HTML + JSON + MD</text>
+  <text x="945" y="647" text-anchor="middle" font-size="10" fill="#475569">index agregador con badges PASS/FAIL</text>
+  <text x="945" y="665" text-anchor="middle" font-size="10" fill="#6B7280">non-root · RO fs · solo GET/HEAD</text>
+  <text x="945" y="685" text-anchor="middle" font-size="10" fill="#6B7280">:8088 (ClusterIP)</text>
+
+  <!-- Worker C: chaos-demo (samples) -->
+  <rect x="330" y="540" width="395" height="200" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.2" filter="url(#shadow)"/>
+  <rect x="330" y="540" width="395" height="24" rx="8" fill="#475569"/>
+  <text x="527" y="556" text-anchor="middle" font-size="11" font-weight="700" fill="#FFFFFF">Worker node (replicado)</text>
+
+  <rect x="345" y="575" width="365" height="150" rx="6" fill="#FCE7F3" stroke="#DB2777" stroke-width="1.2"/>
+  <text x="527" y="592" text-anchor="middle" font-size="10" font-weight="700" fill="#9F1239">ns: chaos-demo (opcional, samples/)</text>
+  <text x="527" y="615" text-anchor="middle" font-size="12" font-weight="700" fill="#1F3864">nginx-target + workloads de samples/</text>
+  <text x="527" y="635" text-anchor="middle" font-size="10" fill="#475569">target de los CRs YAML de samples/podchaos, networkchaos, ...</text>
+  <text x="527" y="660" text-anchor="middle" font-size="10" fill="#6B7280">CRs aplican blast radius (default 50%, MaxPods configurable)</text>
+  <text x="527" y="685" text-anchor="middle" font-size="11" font-style="italic" fill="#9F1239">Aquí "viven" los experimentos del usuario</text>
+  <text x="527" y="700" text-anchor="middle" font-size="10" font-style="italic" fill="#9F1239">— distintos a los del namespace de carga —</text>
+
+  <!-- Connections: operator → control plane (watch) -->
+  <line x1="515" y1="370" x2="515" y2="290" stroke="#2E75B6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="540" y="335" font-size="9" fill="#2E75B6">watch CRs</text>
+
+  <!-- operator → pods en chaos-load -->
+  <line x1="515" y1="425" x2="555" y2="425" stroke="#16A34A" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="520" y="418" font-size="9" fill="#16A34A">kill/exec</text>
+
+  <!-- operator → samples chaos-demo -->
+  <line x1="510" y1="495" x2="510" y2="555" stroke="#DB2777" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="515" y="525" font-size="9" fill="#DB2777">kill/exec</text>
+
+  <!-- Prometheus → operator (scrape) -->
+  <line x1="775" y1="420" x2="515" y2="430" stroke="#EA580C" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-gray)"/>
+  <text x="600" y="408" font-size="9" fill="#EA580C">scrape /metrics</text>
+
+  <!-- k6 → InfluxDB (streaming) -->
+  <line x1="225" y1="290" x2="945" y2="395" stroke="#06B6D4" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.65"/>
+  <text x="600" y="280" font-size="9" fill="#06B6D4" font-style="italic">k6 --out influxdb (INFLUX=true)</text>
+
+  <!-- Legend -->
+  <rect x="30" y="775" width="1140" height="38" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="50" y="797" font-size="10" font-weight="600" fill="#475569">Convenciones:</text>
+  <line x1="155" y1="794" x2="180" y2="794" stroke="#2E75B6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="185" y="797" font-size="10" fill="#475569">control plane / API</text>
+  <line x1="310" y1="794" x2="335" y2="794" stroke="#16A34A" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="340" y="797" font-size="10" fill="#475569">acción del operator</text>
+  <line x1="470" y1="794" x2="495" y2="794" stroke="#EA580C" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-gray)"/>
+  <text x="500" y="797" font-size="10" fill="#475569">scrape Prometheus</text>
+  <line x1="625" y1="794" x2="650" y2="794" stroke="#06B6D4" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="655" y="797" font-size="10" fill="#475569">streaming k6 → InfluxDB</text>
+  <line x1="810" y1="794" x2="835" y2="794" stroke="#D97706" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+  <text x="840" y="797" font-size="10" fill="#475569">port-forward al host del usuario</text>
+</svg>

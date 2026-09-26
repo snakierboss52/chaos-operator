@@ -1,0 +1,4 @@
+# Este archivo se mantiene por compatibilidad pero NO se aplica.
+# La definición real del ConfigMap 'grafana-datasources' vive inline
+# dentro de monitoring/grafana-deployment.yaml para evitar duplicación.
+# El target 'load-deploy' aplica únicamente grafana-deployment.yaml.

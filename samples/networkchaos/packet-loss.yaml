@@ -1,0 +1,22 @@
+apiVersion: chaos.engineering.io/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: packet-loss
+  namespace: chaos-demo
+spec:
+  mode: fixed-percent
+  value: "50"
+  selector:
+    namespaces:
+      - chaos-demo
+    labelSelectors:
+      app: apache-target
+  action: loss
+  direction: both
+  loss:
+    loss: "10"
+    correlation: "25"
+  duration: "5m"
+  blastRadius:
+    maxPods: 3
+    maxPercentage: 50
