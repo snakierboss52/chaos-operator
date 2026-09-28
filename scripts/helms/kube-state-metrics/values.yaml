@@ -1,0 +1,5 @@
+replicas: 1
+prometheusScrape: true
+service:
+  type: ClusterIP
+  port: 8080

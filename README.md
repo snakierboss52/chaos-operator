@@ -17,6 +17,14 @@ Operador de Kubernetes cloud-native para ejecutar experimentos de Chaos Engineer
 - **Patrones de Diseño**: Strategy, Factory, Builder, Repository patterns
 - **Seguridad por Diseño**: RBAC, validación exhaustiva, privilegios mínimos
 
+## Entorno local de observabilidad
+
+El entorno local usa kind y Helm para instalar Prometheus, Grafana y
+kube-state-metrics; InfluxDB se conserva para el streaming de k6. Consulta
+[la guía de monitoreo](docs/MONITORING.md) y [los scripts del cluster kind](scripts/kind/README.md).
+Los valores están preparados para kind. La documentación deja previsto un
+perfil separado para AWS, que se definirá antes de usarlo en un cluster real.
+
 ## 📋 Tipos de Chaos Soportados
 
 ### PodChaos

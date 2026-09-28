@@ -27,6 +27,11 @@ help:
 	@echo "  make deploy            - Deploy operator to cluster"
 	@echo "  make undeploy          - Remove operator from cluster"
 	@echo "  make install-all       - Generate CRDs, build image and deploy"
+	@echo "  make kind-up           - Create the local kind cluster"
+	@echo "  make kind-status       - Show local kind cluster nodes"
+	@echo "  make kind-down         - Delete the local kind cluster"
+	@echo "  make addons-install    - Install local monitoring addons with Helm"
+	@echo "  make addons-uninstall  - Remove local monitoring Helm releases"
 	@echo ""
 	@echo "Load testing targets (run 'make load-help' for details):"
 	@echo "  make load-up           - Create kind cluster (idempotent)"
@@ -118,3 +123,19 @@ report:
 install-all: generate-crds docker-build install-crds deploy
 	@echo "✅ Installation complete!"
 	@echo "Check operator status with: kubectl get pods -n chaos-system"
+
+.PHONY: kind-up kind-down kind-status addons-install addons-uninstall
+kind-up:
+	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/kind/up.sh
+
+kind-down:
+	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/kind/down.sh
+
+kind-status:
+	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/kind/status.sh
+
+addons-install: kind-up
+	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/helms/install-local.sh
+
+addons-uninstall:
+	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/helms/uninstall-local.sh

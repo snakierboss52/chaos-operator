@@ -5,33 +5,35 @@ Este documento describe cómo usar el stack de monitoreo con Prometheus y Grafan
 ## 🚀 Instalación Rápida
 
 ```bash
-cd monitoring
-./install-monitoring.sh
+make kind-up
+make addons-install
 ```
 
-O manualmente:
+El stack local usa charts upstream de Helm para Prometheus, Grafana y
+kube-state-metrics. Las versiones y valores de kind están en
+`scripts/helms/`. kube-state-metrics se instala como release separado porque
+los dashboards consultan métricas `kube_*`. InfluxDB permanece como manifiesto
+local para soportar el streaming de k6.
 
-```bash
-kubectl create namespace monitoring
-kubectl apply -f monitoring/prometheus-config.yaml
-kubectl apply -f monitoring/prometheus-deployment.yaml
-kubectl apply -f monitoring/grafana-dashboards-configmap.yaml
-kubectl apply -f monitoring/grafana-deployment.yaml
-```
+Para quitar las releases: `make addons-uninstall`. La configuración de AWS se
+añadirá como perfil separado; la configuración local usa credenciales de
+desarrollo, por lo que no debe aplicarse a un cluster AWS.
 
 ## 🔗 Acceso a las Interfaces
 
 ### Para Kind (cluster local):
 
-```bash
-# Port-forward Prometheus
-kubectl port-forward -n monitoring svc/prometheus 9090:9090
+Inicia port-forwards en terminales separadas:
 
-# Port-forward Grafana
-kubectl port-forward -n monitoring svc/grafana 3000:3000
+```bash
+kubectl port-forward -n monitoring svc/prometheus-server 9090:80
+kubectl port-forward -n monitoring svc/grafana 3000:80
 ```
 
-Luego abre en tu navegador:
+O inicia ambos juntos con `./monitoring/access-monitoring.sh` y detén ambos con
+Ctrl+C.
+
+Luego abre:
 - **Prometheus**: http://localhost:9090
 - **Grafana**: http://localhost:3000
 

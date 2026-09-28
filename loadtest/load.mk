@@ -80,19 +80,7 @@ load-help:
 
 .PHONY: load-up
 load-up:
-	@command -v kind >/dev/null || { echo "❌ kind no está instalado"; exit 1; }
-	@command -v kubectl >/dev/null || { echo "❌ kubectl no está instalado"; exit 1; }
-	@command -v docker >/dev/null || { echo "❌ docker no está instalado"; exit 1; }
-	@if kind get clusters 2>/dev/null | grep -q "^$(KIND_CLUSTER)$$"; then \
-		echo "✓ Cluster kind '$(KIND_CLUSTER)' ya existe"; \
-	else \
-		echo "→ Creando cluster kind '$(KIND_CLUSTER)'..."; \
-		kind create cluster --config kind-cluster.yaml; \
-		sleep 5; \
-		kubectl get csr 2>/dev/null | grep Pending | awk '{print $$1}' | xargs -r kubectl certificate approve; \
-	fi
-	@kubectl config use-context kind-$(KIND_CLUSTER) >/dev/null
-	@kubectl wait --for=condition=Ready nodes --all --timeout=120s
+	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/kind/up.sh
 
 .PHONY: load-images-prepull
 load-images-prepull: load-up
@@ -154,16 +142,8 @@ load-deploy: load-up load-images-prepull
 	@kubectl apply -f config/manager/service.yaml
 	@kubectl rollout restart deployment/chaos-operator -n chaos-system 2>/dev/null || true
 	@kubectl wait --for=condition=available --timeout=180s deployment/chaos-operator -n chaos-system
-	@echo "→ Desplegando monitoring (Prometheus + Grafana + InfluxDB)..."
-	@kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
-	@kubectl apply -f monitoring/prometheus-config.yaml
-	@kubectl apply -f monitoring/prometheus-deployment.yaml
-	@kubectl apply -f monitoring/influxdb-deployment.yaml
-	@kubectl apply -f monitoring/grafana-dashboards-configmap.yaml
-	@kubectl apply -f monitoring/grafana-deployment.yaml
-	@kubectl wait --for=condition=ready pod -l app=prometheus -n monitoring --timeout=180s
-	@kubectl wait --for=condition=ready pod -l app=grafana -n monitoring --timeout=180s
-	@kubectl wait --for=condition=ready pod -l app=influxdb -n monitoring --timeout=180s
+	@echo "→ Desplegando addons de monitoreo con Helm..."
+	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/helms/install-local.sh
 	@echo "→ Cargando dashboards individuales del repo en Grafana..."
 	@$(MAKE) load-grafana-reload
 	@echo "→ Desplegando workloads de carga (namespace $(LOAD_NAMESPACE))..."
@@ -194,7 +174,7 @@ load-prom-pf:
 		echo "✓ Port-forward de Prometheus ya activo (pid $$(cat $(LOAD_PORT_FORWARD_PID)))"; \
 	else \
 		echo "→ Iniciando port-forward Prometheus :9090..."; \
-		kubectl port-forward -n monitoring svc/prometheus 9090:9090 >/dev/null 2>&1 & \
+		kubectl port-forward -n monitoring svc/prometheus-server 9090:80 >/dev/null 2>&1 & \
 		echo $$! > $(LOAD_PORT_FORWARD_PID); \
 		sleep 2; \
 		echo "✓ Prometheus accesible en $(PROM_URL) (pid $$(cat $(LOAD_PORT_FORWARD_PID)))"; \
@@ -288,11 +268,11 @@ load-grafana-reload:
 	@echo "→ Reconstruyendo ConfigMap 'grafana-dashboards' (montado en /var/lib/grafana/dashboards)..."
 	@kubectl create configmap grafana-dashboards \
 		--namespace=monitoring \
+		--dry-run=client \
+		--labels=grafana_dashboard=1 \
 		$(foreach f,$(LOAD_GRAFANA_DASHBOARDS),--from-file=$(notdir $(f))=$(f)) \
-		--dry-run=client -o yaml | kubectl apply -f -
-	@echo "→ Reiniciando Grafana para que recargue los dashboards..."
-	@kubectl rollout restart deployment/grafana -n monitoring
-	@kubectl wait --for=condition=ready pod -l app=grafana -n monitoring --timeout=90s
+		-o yaml | kubectl apply -f -
+	@echo "✓ Sidecar de Grafana recargará los dashboards automáticamente."
 	@echo "✅ Dashboards recargados:"
 	@for f in $(LOAD_GRAFANA_DASHBOARDS); do echo "    • $$f"; done
 	@echo "  Abrí Grafana con: make load-grafana-pf  →  http://localhost:3000 (admin/admin)"
@@ -310,7 +290,7 @@ load-grafana-pf:
 		kubectl wait --for=condition=available --timeout=60s deployment/grafana -n monitoring >/dev/null \
 			|| { echo "❌ Grafana no llegó a Available en 60s."; exit 1; }; \
 		echo "→ Iniciando port-forward Grafana :3000..."; \
-		kubectl port-forward -n monitoring svc/grafana 3000:3000 >/dev/null 2>&1 & \
+		kubectl port-forward -n monitoring svc/grafana 3000:80 >/dev/null 2>&1 & \
 		echo $$! > $(LOAD_GRAFANA_PF_PID); \
 		for i in 1 2 3 4 5 6 7 8 9 10; do \
 			if curl -fsS -o /dev/null --max-time 1 http://localhost:3000/api/health 2>/dev/null; then \
@@ -488,6 +468,6 @@ load-down: load-clean load-grafana-stop load-influx-stop load-reports-stop
 .PHONY: load-teardown
 load-teardown:
 	@echo "⚠  Esto destruirá el cluster kind '$(KIND_CLUSTER)' completamente."
-	@kind delete cluster --name $(KIND_CLUSTER)
+	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/kind/down.sh
 	@if [ -f $(LOAD_PORT_FORWARD_PID) ]; then rm -f $(LOAD_PORT_FORWARD_PID); fi
 	@echo "✓ Cluster destruido."
