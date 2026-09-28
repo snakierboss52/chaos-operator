@@ -265,9 +265,9 @@ eval $(minikube docker-env)
 make docker-build
 kubectl rollout restart deployment chaos-operator -n chaos-system
 
-# Para kind
-kind load docker-image goland-operator:latest
-kubectl rollout restart deployment chaos-operator -n chaos-system
+# Para kind, cargar la imagen construida y actualizar el deployment
+make kind-load-image IMG=goland-operator:latest
+make deploy IMG=goland-operator:latest
 ```
 
 ### Permisos insuficientes

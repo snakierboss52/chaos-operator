@@ -3,6 +3,7 @@ SHELL := /bin/bash
 APP_NAME := goland-operator
 GO_FILES := $(shell find . -name '*.go' -not -path './vendor/*')
 IMG ?= goland-operator:latest
+KIND_CONFIG ?= kind-cluster.yaml
 
 # Pruebas de carga (k6 + xk6-kubernetes). Targets: load-up, load-deploy,
 # load-smoke, load-steady, load-spike, load-clean, load-down. Ver loadtest/runbook.md.
@@ -21,13 +22,14 @@ help:
 	@echo "Kubernetes deployment targets:"
 	@echo "  make generate-crds     - Generate CRD manifests"
 	@echo "  make docker-build      - Build Docker image"
+	@echo "  make kind-load-image   - Load the existing IMG into the local kind cluster"
 	@echo "  make docker-push       - Push Docker image"
 	@echo "  make install-crds      - Install CRDs to cluster"
 	@echo "  make uninstall-crds    - Uninstall CRDs from cluster"
 	@echo "  make deploy            - Deploy operator to cluster"
 	@echo "  make undeploy          - Remove operator from cluster"
 	@echo "  make install-all       - Generate CRDs, build image and deploy"
-	@echo "  make kind-up           - Create the local kind cluster"
+	@echo "  make kind-up           - Create local kind cluster from KIND_CONFIG"
 	@echo "  make kind-status       - Show local kind cluster nodes"
 	@echo "  make kind-down         - Delete the local kind cluster"
 	@echo "  make addons-install    - Install local monitoring addons with Helm"
@@ -104,6 +106,8 @@ deploy:
 	kubectl apply -f config/rbac/
 	kubectl apply -f config/manager/deployment.yaml
 	kubectl apply -f config/manager/service.yaml
+	kubectl set image deployment/chaos-operator manager=$(IMG) -n chaos-system
+	kubectl rollout restart deployment/chaos-operator -n chaos-system
 	@echo "Waiting for deployment to be ready..."
 	kubectl wait --for=condition=available --timeout=300s deployment/chaos-operator -n chaos-system
 
@@ -124,15 +128,20 @@ install-all: generate-crds docker-build install-crds deploy
 	@echo "✅ Installation complete!"
 	@echo "Check operator status with: kubectl get pods -n chaos-system"
 
-.PHONY: kind-up kind-down kind-status addons-install addons-uninstall
+.PHONY: kind-up kind-down kind-status kind-load-image addons-install addons-uninstall
 kind-up:
-	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/kind/up.sh
+	@KIND_CLUSTER=$(KIND_CLUSTER) KIND_CONFIG=$(KIND_CONFIG) scripts/kind/up.sh
 
 kind-down:
 	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/kind/down.sh
 
 kind-status:
 	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/kind/status.sh
+
+kind-load-image:
+	@docker image inspect "$(IMG)" >/dev/null 2>&1 || { echo "Docker image '$(IMG)' not found; run make docker-build IMG=$(IMG) first." >&2; exit 1; }
+	@KIND_CLUSTER=$(KIND_CLUSTER) KIND_CONFIG=$(KIND_CONFIG) scripts/kind/up.sh
+	@kind load docker-image "$(IMG)" --name "$(KIND_CLUSTER)"
 
 addons-install: kind-up
 	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/helms/install-local.sh

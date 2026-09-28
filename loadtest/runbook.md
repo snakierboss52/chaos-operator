@@ -17,8 +17,8 @@ Guía paso a paso para levantar el cluster, desplegar el operador y ejecutar los
 ## Flujo recomendado (un comando por paso)
 
 ```bash
-make load-up        # 1. Crea kind si no existe; aprueba CSRs; nodos Ready
-make load-deploy    # 2. Build + deploy operator + monitoring (Prom + Grafana + InfluxDB) + workloads
+make load-up        # 1. Crea kind desde kind-cluster.yaml; aprueba CSRs; nodos Ready
+make load-deploy    # 2. Compone build de imagen + kind load + deploy + addons + workloads
 make load-bin       # 3. Construye k6 con xk6-kubernetes en loadtest/bin/k6 (1ª vez)
 make load-prom-pf   # 4. Port-forward Prometheus :9090
 make load-grafana   # 5. Port-forward Grafana + abre navegador
@@ -41,11 +41,11 @@ Cada target es idempotente: re-ejecutar uno sin cambios no rompe el estado anter
 
 ### `make load-up`
 
-Detecta si el cluster `chaos-testing-v2` ya existe (`kind get clusters`). Si no, lo crea con `kind-cluster.yaml`, aprueba los CSRs pendientes del kubelet (necesarios porque `kind-cluster.yaml` activa `serverTLSBootstrap: true`), cambia el contexto kubectl al cluster y espera a que todos los nodos estén Ready (timeout 120s).
+Detecta si el cluster `chaos-testing-v2` ya existe (`kind get clusters`). Si no, lo crea con el archivo `KIND_CONFIG` (por defecto `kind-cluster.yaml`), aprueba los CSRs pendientes del kubelet (necesarios porque el archivo activa `serverTLSBootstrap: true`), cambia el contexto kubectl al cluster y espera a que todos los nodos estén Ready (timeout 180s). Se puede seleccionar otro archivo con `make load-up KIND_CONFIG=path/to/cluster.yaml`.
 
 ### `make load-deploy`
 
-Encadena: `make generate generate-crds`, `docker build -t goland-operator:latest .`, `kind load docker-image`, `kubectl apply -f config/crd/`, `kubectl apply -f config/rbac/`, deploy del operador, deploy de Prometheus + Grafana, y deploy de los workloads de carga (`loadtest/workloads/load-target.yaml`). Hace `kubectl rollout restart` del operador para que tome la imagen recién construida.
+Encadena: generación de código/CRDs, `make docker-build IMG=$(IMG)`, `make kind-load-image IMG=$(IMG)`, aplicación de CRDs/RBAC y deployment, addons Prometheus/Grafana/kube-state-metrics e InfluxDB, y workloads de carga. Los pasos de imagen también se pueden ejecutar por separado; `make build` genera adicionalmente el binario host en `bin/`.
 
 ### `make load-bin`
 

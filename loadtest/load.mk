@@ -39,7 +39,7 @@ load-help:
 	@echo "Setup (idempotente):"
 	@echo "  make load-up              - Crea cluster kind si no existe; espera nodes Ready."
 	@echo "  make load-images-prepull  - Docker pull + kind load de imágenes externas."
-	@echo "  make load-deploy          - Pre-pull + build + load image + deploy operator + monitoring + workloads."
+	@echo "  make load-deploy          - Pre-pull + build/load IMG + deploy operator + monitoring + workloads."
 	@echo "  make load-bin             - Construye k6 con xk6-kubernetes (loadtest/bin/k6)."
 	@echo "  make load-prom-pf         - Inicia port-forward de Prometheus a localhost:9090."
 	@echo ""
@@ -80,7 +80,7 @@ load-help:
 
 .PHONY: load-up
 load-up:
-	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/kind/up.sh
+	@KIND_CLUSTER=$(KIND_CLUSTER) KIND_CONFIG=$(KIND_CONFIG) scripts/kind/up.sh
 
 .PHONY: load-images-prepull
 load-images-prepull: load-up
@@ -130,9 +130,9 @@ load-deploy: load-up load-images-prepull
 	@echo "→ Generando código y CRDs..."
 	@$(MAKE) generate generate-crds
 	@echo "→ Build de imagen $(IMG)..."
-	@docker build -t $(IMG) .
-	@echo "→ Cargando imagen en kind..."
-	@kind load docker-image $(IMG) --name $(KIND_CLUSTER)
+	@$(MAKE) docker-build IMG=$(IMG)
+	@echo "→ Cargando la imagen existente en kind..."
+	@$(MAKE) kind-load-image IMG=$(IMG) KIND_CLUSTER=$(KIND_CLUSTER)
 	@echo "→ Aplicando CRDs..."
 	@kubectl apply -f config/crd/
 	@echo "→ Desplegando operator..."
@@ -140,6 +140,7 @@ load-deploy: load-up load-images-prepull
 	@kubectl apply -f config/rbac/
 	@kubectl apply -f config/manager/deployment.yaml
 	@kubectl apply -f config/manager/service.yaml
+	@kubectl set image deployment/chaos-operator manager=$(IMG) -n chaos-system
 	@kubectl rollout restart deployment/chaos-operator -n chaos-system 2>/dev/null || true
 	@kubectl wait --for=condition=available --timeout=180s deployment/chaos-operator -n chaos-system
 	@echo "→ Desplegando addons de monitoreo con Helm..."
