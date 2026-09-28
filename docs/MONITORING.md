@@ -9,11 +9,11 @@ make kind-up
 make addons-install
 ```
 
-El stack local usa charts upstream de Helm para Prometheus, Grafana y
-kube-state-metrics. Las versiones y valores de kind están en
-`scripts/helms/`. kube-state-metrics se instala como release separado porque
-los dashboards consultan métricas `kube_*`. InfluxDB permanece como manifiesto
-local para soportar el streaming de k6.
+El stack local usa charts upstream de Helm para Traefik, Prometheus, Grafana y
+kube-state-metrics. Las versiones y valores de kind están en `scripts/helms/`.
+kube-state-metrics se instala como release separado porque los dashboards
+consultan métricas `kube_*`. InfluxDB permanece como manifiesto local para
+soportar el streaming de k6.
 
 Para quitar las releases: `make addons-uninstall`. La configuración de AWS se
 añadirá como perfil separado; la configuración local usa credenciales de
@@ -23,19 +23,17 @@ desarrollo, por lo que no debe aplicarse a un cluster AWS.
 
 ### Para Kind (cluster local):
 
-Inicia port-forwards en terminales separadas:
+El Ingress de Traefik expone las interfaces localmente sin port-forward:
 
-```bash
-kubectl port-forward -n monitoring svc/prometheus-server 9090:80
-kubectl port-forward -n monitoring svc/grafana 3000:80
-```
+- **Prometheus**: http://prometheus.localhost:30080
+- **Grafana**: http://grafana.localhost:30080
+- **Métricas del operador**: http://operator.localhost:30080/metrics (si está
+  instalado el operador y existe el Service de métricas al instalar addons).
 
-O inicia ambos juntos con `./monitoring/access-monitoring.sh` y detén ambos con
-Ctrl+C.
-
-Luego abre:
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3000
+kind mapea el NodePort `30080` al loopback del host. Ese mapeo se establece al
+crear el cluster. Si el cluster ya existía antes de agregarlo, recréalo con
+`make kind-down && make kind-up`. Como alternativa, los targets `make load-prom-pf`
+y `make load-grafana-pf` abren port-forwards.
 
 ### Credenciales de Grafana
 

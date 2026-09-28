@@ -16,7 +16,8 @@ fi
 
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
 helm repo add grafana-community https://grafana-community.github.io/helm-charts --force-update
-helm repo update prometheus-community grafana-community
+helm repo add traefik https://traefik.github.io/charts --force-update
+helm repo update prometheus-community grafana-community traefik
 kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 
 helm upgrade --install kube-state-metrics prometheus-community/kube-state-metrics \
@@ -28,6 +29,10 @@ helm upgrade --install prometheus prometheus-community/prometheus \
 helm upgrade --install grafana grafana-community/grafana \
   --version "${GRAFANA_CHART_VERSION:-12.10.0}" --namespace monitoring \
   --values "$ROOT_DIR/scripts/helms/grafana/values.yaml" --wait --timeout 5m
+helm upgrade --install traefik traefik/traefik \
+  --version "${TRAEFIK_CHART_VERSION:-41.6.0}" --namespace traefik \
+  --create-namespace --values "$ROOT_DIR/scripts/helms/traefik/values.yaml" \
+  --wait --timeout 5m
 
 # Grafana's sidecar watches labeled ConfigMaps and loads the repo dashboards.
 DASHBOARDS=("$ROOT_DIR"/monitoring/*.json)
@@ -40,7 +45,15 @@ kubectl create configmap grafana-dashboards --namespace monitoring \
 # supplied as a hardened manifest rather than a Helm chart.
 kubectl apply -f "$ROOT_DIR/monitoring/influxdb-deployment.yaml"
 kubectl wait --for=condition=available deployment/influxdb -n monitoring --timeout=3m
+kubectl apply -f "$ROOT_DIR/scripts/helms/traefik/ingresses.yaml"
+if kubectl get service chaos-operator-metrics -n chaos-system >/dev/null 2>&1; then
+  kubectl apply -f "$ROOT_DIR/scripts/helms/traefik/operator-metrics-ingress.yaml"
+else
+  echo "Operator metrics Service not found; skipping operator.localhost route."
+fi
 
 echo "Local monitoring addons are ready in namespace monitoring."
-echo "Run 'make load-prom-pf' and 'make load-grafana-pf' to open local port-forwards."
+echo "Grafana: http://grafana.localhost:30080 (admin/admin)"
+echo "Prometheus: http://prometheus.localhost:30080"
+echo "Operator metrics: http://operator.localhost:30080/metrics (when the operator is installed)"
 echo "Grafana credentials: admin/admin"

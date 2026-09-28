@@ -7,6 +7,10 @@ persistence:
   enabled: false
 adminUser: admin
 adminPassword: admin
+grafana.ini:
+  server:
+    domain: grafana.localhost
+    root_url: http://grafana.localhost:30080/
 sidecar:
   dashboards:
     enabled: true
