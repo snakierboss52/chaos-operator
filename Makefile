@@ -34,6 +34,8 @@ help:
 	@echo "  make kind-down         - Delete the local kind cluster"
 	@echo "  make addons-install    - Install local monitoring addons with Helm"
 	@echo "  make addons-uninstall  - Remove local monitoring Helm releases"
+	@echo "  make lab-deploy        - Deploy lightweight Nginx and Apache chaos targets"
+	@echo "  make lab-clean         - Remove the chaos target workloads"
 	@echo ""
 	@echo "Load testing targets (run 'make load-help' for details):"
 	@echo "  make load-up           - Create kind cluster (idempotent)"
@@ -128,7 +130,7 @@ install-all: generate-crds docker-build install-crds deploy
 	@echo "✅ Installation complete!"
 	@echo "Check operator status with: kubectl get pods -n chaos-system"
 
-.PHONY: kind-up kind-down kind-status kind-load-image addons-install addons-uninstall
+.PHONY: kind-up kind-down kind-status kind-load-image addons-install addons-uninstall lab-deploy lab-clean
 kind-up:
 	@KIND_CLUSTER=$(KIND_CLUSTER) KIND_CONFIG=$(KIND_CONFIG) scripts/kind/up.sh
 
@@ -148,3 +150,16 @@ addons-install: kind-up
 
 addons-uninstall:
 	@KIND_CLUSTER=$(KIND_CLUSTER) scripts/helms/uninstall-local.sh
+
+lab-deploy: kind-up
+	@docker build -f samples/workloads/Dockerfile.apache-nettools -t apache-nettools:latest .
+	@kind load docker-image apache-nettools:latest --name "$(KIND_CLUSTER)"
+	@kubectl apply -f samples/workloads/nginx-target.yaml
+	@kubectl apply -f samples/workloads/apache-target.yaml
+	@kubectl wait --for=condition=available deployment/nginx-target -n chaos-demo --timeout=180s
+	@kubectl wait --for=condition=available deployment/apache-target -n chaos-demo --timeout=180s
+	@echo "Chaos lab targets ready in namespace chaos-demo."
+
+lab-clean:
+	@kubectl delete -f samples/workloads/apache-target.yaml --ignore-not-found
+	@kubectl delete -f samples/workloads/nginx-target.yaml --ignore-not-found

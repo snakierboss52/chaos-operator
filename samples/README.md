@@ -12,6 +12,24 @@ samples/
 └── httpchaos/         # Ejemplos de HTTPChaos
 ```
 
+## Workloads del laboratorio local
+
+Los manifiestos `workloads/nginx-target.yaml` y `workloads/apache-target.yaml`
+despliegan los objetivos de experimentos en `chaos-demo`: seis réplicas de
+Nginx y dos de Apache. Cada pod solicita 50m CPU y 64Mi de memoria, con límites
+de 200m CPU y 128Mi; esto mantiene un tamaño moderado y deja suficiente
+replicación para observar fallos y recuperación.
+
+Desde la raíz del repositorio, `make lab-deploy` construye y carga la imagen
+local de Apache (incluye `tc` e `iptables` para NetworkChaos), aplica ambos
+deployments y espera a que estén listos. Requiere tener Docker, kind y kubectl
+instalados y usar el cluster kind del proyecto. `make lab-clean` elimina solo
+estos workloads y conserva el cluster, el operator y el monitoring.
+
+Estos targets son independientes de `make addons-install` y del escenario de
+carga `make load-deploy`. Los experimentos de ejemplo pueden apuntar a
+`namespace: chaos-demo` con `app: nginx` o `app: apache-target`.
+
 ## PodChaos
 
 ### basic-kill-one.yaml

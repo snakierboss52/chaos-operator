@@ -26,6 +26,8 @@ http://prometheus.localhost:30080. Consulta
 [la guía de monitoreo](docs/MONITORING.md) y [los scripts del cluster kind](scripts/kind/README.md).
 Los valores están preparados para kind. La documentación deja previsto un
 perfil separado para AWS, que se definirá antes de usarlo en un cluster real.
+Para desplegar los objetivos livianos de experimentos (6 Nginx y 2 Apache),
+usa `make lab-deploy`; `make lab-clean` los retira sin borrar el cluster.
 
 ## 📋 Tipos de Chaos Soportados
 
