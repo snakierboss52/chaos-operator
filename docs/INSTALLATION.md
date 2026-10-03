@@ -22,6 +22,26 @@ kubectl version --short
 docker version
 ```
 
+## Laboratorio local con kind
+
+Para crear kind y desplegar el operator, monitoring y las apps objetivo:
+
+```bash
+make kind-up
+make docker-build
+make kind-load-image
+make install-crds
+make deploy
+make addons-install
+make lab-deploy
+```
+
+Para apagar y eliminar el cluster local:
+
+```bash
+make kind-down
+```
+
 ## 🚀 Instalación Rápida
 
 ### Opción 1: Instalación completa con un comando
