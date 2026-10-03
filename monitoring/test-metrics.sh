@@ -9,7 +9,7 @@ echo ""
 
 # Check if operator is running
 echo "1. Checking operator status..."
-OPERATOR_POD=$(kubectl get pods -n default -l app=chaos-operator -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+OPERATOR_POD=$(kubectl get pods -n chaos-system -l app=chaos-operator -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
 
 if [ -z "$OPERATOR_POD" ]; then
     echo "❌ Operator not found. Please start the operator first."
@@ -22,11 +22,11 @@ echo ""
 
 # Check if prometheus is running
 echo "2. Checking Prometheus status..."
-kubectl get pods -n monitoring -l app=prometheus | grep Running > /dev/null
-if [ $? -eq 0 ]; then
+if kubectl get deployment prometheus-server -n monitoring >/dev/null 2>&1; then
+	kubectl wait --for=condition=available deployment/prometheus-server -n monitoring --timeout=60s >/dev/null
     echo "✅ Prometheus is running"
 else
-    echo "❌ Prometheus not running. Run: ./install-monitoring.sh"
+    echo "❌ Prometheus not running. Run: ./monitoring/install-monitoring.sh"
     exit 1
 fi
 echo ""
@@ -85,7 +85,7 @@ echo ""
 
 # Query Prometheus
 echo "6. Querying Prometheus..."
-kubectl port-forward -n monitoring svc/prometheus 9090:9090 > /dev/null 2>&1 &
+kubectl port-forward -n monitoring svc/prometheus-server 9090:80 > /dev/null 2>&1 &
 PROM_PID=$!
 sleep 3
 

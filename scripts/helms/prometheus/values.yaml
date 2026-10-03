@@ -1,0 +1,33 @@
+alertmanager:
+  enabled: false
+kube-state-metrics:
+  enabled: false
+prometheus-node-exporter:
+  enabled: false
+prometheus-pushgateway:
+  enabled: false
+server:
+  persistentVolume:
+    enabled: false
+  service:
+    type: ClusterIP
+  global:
+    scrape_interval: 15s
+    evaluation_interval: 15s
+  extraScrapeConfigs: |
+    - job_name: chaos-operator
+      kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names: [chaos-system]
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_label_app]
+          action: keep
+          regex: chaos-operator
+        - source_labels: [__meta_kubernetes_pod_ip]
+          target_label: __address__
+          replacement: "$1:8080"
+        - source_labels: [__meta_kubernetes_pod_name]
+          target_label: pod
+        - source_labels: [__meta_kubernetes_namespace]
+          target_label: operator_namespace

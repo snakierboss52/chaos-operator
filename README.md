@@ -17,6 +17,18 @@ Operador de Kubernetes cloud-native para ejecutar experimentos de Chaos Engineer
 - **Patrones de Diseño**: Strategy, Factory, Builder, Repository patterns
 - **Seguridad por Diseño**: RBAC, validación exhaustiva, privilegios mínimos
 
+## Entorno local de observabilidad
+
+El entorno local usa kind y Helm para instalar Traefik (acceso HTTP por Ingress),
+Prometheus, Grafana y kube-state-metrics; InfluxDB se conserva para el streaming
+de k6. Grafana queda en http://grafana.localhost:30080 y Prometheus en
+http://prometheus.localhost:30080. Consulta
+[la guía de monitoreo](docs/MONITORING.md) y [los scripts del cluster kind](scripts/kind/README.md).
+Los valores están preparados para kind. La documentación deja previsto un
+perfil separado para AWS, que se definirá antes de usarlo en un cluster real.
+Para desplegar los objetivos livianos de experimentos (6 Nginx y 2 Apache),
+usa `make lab-deploy`; `make lab-clean` los retira sin borrar el cluster.
+
 ## 📋 Tipos de Chaos Soportados
 
 ### PodChaos

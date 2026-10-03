@@ -13,10 +13,8 @@ nodes:
     extraPortMappings:
       - containerPort: 30080
         hostPort: 30080
+        listenAddress: "127.0.0.1"
         protocol: TCP
-      - containerPort: 30030
-        hostPort: 30030
-        protocol: TCP   # Grafana NodePort
 
   - role: worker
     labels:
