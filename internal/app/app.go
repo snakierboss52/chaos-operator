@@ -12,6 +12,7 @@ import (
 
 	chaosv1alpha1 "goland-operator/api/v1alpha1"
 	"goland-operator/controllers"
+	operatorapi "goland-operator/internal/api"
 	"goland-operator/internal/infrastructure"
 )
 
@@ -44,12 +45,16 @@ func Start(version string) error {
 	// Get configuration
 	metricsAddr := getEnv("METRICS_ADDR", ":8080")
 	probeAddr := getEnv("HEALTH_PROBE_ADDR", ":8081")
+	apiAddr := getEnv("API_ADDR", ":8082")
+	apiAllowedNamespaces := getEnv("API_ALLOWED_NAMESPACES", "chaos-demo")
 	enableLeaderElection := getEnv("ENABLE_LEADER_ELECTION", "false") == "true"
 
 	setupLog.Info("Starting manager",
 		"version", version,
 		"metricsAddr", metricsAddr,
 		"probeAddr", probeAddr,
+		"apiAddr", apiAddr,
+		"apiAllowedNamespaces", apiAllowedNamespaces,
 		"leaderElection", enableLeaderElection,
 	)
 
@@ -150,6 +155,16 @@ func Start(version string) error {
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
+		return err
+	}
+	if err := mgr.Add(operatorapi.NewServer(
+		apiAddr,
+		mgr.GetClient(),
+		mgr.GetAPIReader(),
+		apiAllowedNamespaces,
+		ctrl.Log.WithName("http-api"),
+	)); err != nil {
+		setupLog.Error(err, "unable to add HTTP API server")
 		return err
 	}
 

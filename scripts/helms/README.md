@@ -24,6 +24,8 @@ siendo Services `ClusterIP` y se acceden por Ingress:
 El mapeo de puertos de kind se configura al crear el cluster. Si ya existía,
 recréalo para aplicar `listenAddress: 127.0.0.1`; mientras tanto, pueden usarse
 los targets `make load-prom-pf` y `make load-grafana-pf` como alternativa.
+El endpoint HTTP local para crear recursos `PodChaos` está documentado en
+[`docs/PODCHAOS_HTTP_API.md`](../../docs/PODCHAOS_HTTP_API.md).
 
 Grafana obtiene los JSON de `monitoring/*.json` mediante su sidecar. Prometheus
 conserva los scrape jobs del operador, kube-state-metrics, pods anotados, kubelet

@@ -108,6 +108,7 @@ deploy:
 	kubectl apply -f config/rbac/
 	kubectl apply -f config/manager/deployment.yaml
 	kubectl apply -f config/manager/service.yaml
+	kubectl apply -f config/manager/service-api.yaml
 	kubectl set image deployment/chaos-operator manager=$(IMG) -n chaos-system
 	kubectl rollout restart deployment/chaos-operator -n chaos-system
 	@echo "Waiting for deployment to be ready..."
@@ -118,6 +119,8 @@ undeploy:
 	@echo "Removing operator from cluster..."
 	kubectl delete -f config/manager/deployment.yaml --ignore-not-found=true
 	kubectl delete -f config/manager/service.yaml --ignore-not-found=true
+	kubectl delete -f config/manager/service-api.yaml --ignore-not-found=true
+	kubectl delete -f scripts/helms/traefik/operator-api-ingress.yaml --ignore-not-found=true
 	kubectl delete -f config/rbac/ --ignore-not-found=true
 	kubectl delete -f config/manager/namespace.yaml --ignore-not-found=true
 

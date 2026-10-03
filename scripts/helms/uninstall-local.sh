@@ -14,6 +14,7 @@ done
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 kubectl delete -f "$ROOT_DIR/scripts/helms/traefik/ingresses.yaml" --ignore-not-found
 kubectl delete -f "$ROOT_DIR/scripts/helms/traefik/operator-metrics-ingress.yaml" --ignore-not-found
+kubectl delete -f "$ROOT_DIR/scripts/helms/traefik/operator-api-ingress.yaml" --ignore-not-found
 helm uninstall traefik --namespace traefik --ignore-not-found
 kubectl delete configmap grafana-dashboards -n monitoring --ignore-not-found
 kubectl delete -f "$ROOT_DIR/monitoring/influxdb-deployment.yaml" --ignore-not-found

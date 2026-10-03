@@ -51,9 +51,15 @@ if kubectl get service chaos-operator-metrics -n chaos-system >/dev/null 2>&1; t
 else
   echo "Operator metrics Service not found; skipping operator.localhost route."
 fi
+if kubectl get service chaos-operator-api -n chaos-system >/dev/null 2>&1; then
+  kubectl apply -f "$ROOT_DIR/scripts/helms/traefik/operator-api-ingress.yaml"
+else
+  echo "Operator API Service not found; skipping the PodChaos API route."
+fi
 
 echo "Local monitoring addons are ready in namespace monitoring."
 echo "Grafana: http://grafana.localhost:30080 (admin/admin)"
 echo "Prometheus: http://prometheus.localhost:30080"
 echo "Operator metrics: http://operator.localhost:30080/metrics (when the operator is installed)"
+echo "PodChaos API: http://operator.localhost:30080/api/v1/podchaos (when the operator is installed)"
 echo "Grafana credentials: admin/admin"
