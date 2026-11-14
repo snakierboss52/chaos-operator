@@ -28,6 +28,9 @@ Los valores están preparados para kind. La documentación deja previsto un
 perfil separado para AWS, que se definirá antes de usarlo en un cluster real.
 Para desplegar los objetivos livianos de experimentos (6 Nginx y 2 Apache),
 usa `make lab-deploy`; `make lab-clean` los retira sin borrar el cluster.
+La API HTTP local permite crear los cuatro tipos de experimento desde un
+body simplificado o desde manifiestos Kubernetes; consulta
+[la guía de la API local](docs/PODCHAOS_HTTP_API.md).
 
 ## 📋 Tipos de Chaos Soportados
 

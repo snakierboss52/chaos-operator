@@ -69,8 +69,10 @@ func (r *PodChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}()
 
 	if !podChaos.DeletionTimestamp.IsZero() {
+		infrastructure.RemoveChaosExperiment("PodChaos", podChaos.Namespace, podChaos.Name)
 		return r.handleDeletion(ctx, &podChaos)
 	}
+	observeExperimentMetrics("PodChaos", podChaos.Namespace, podChaos.Name, string(podChaos.Spec.Action), string(podChaos.Spec.Mode), string(podChaos.Status.Phase), podChaos.Status.Conditions, podChaos.Status.StartTime, podChaos.Status.CompletionTime, podChaos.Status.AffectedPods)
 
 	if !controllerutil.ContainsFinalizer(&podChaos, PodChaosFinalizer) {
 		controllerutil.AddFinalizer(&podChaos, PodChaosFinalizer)
@@ -102,9 +104,6 @@ func (r *PodChaosReconciler) initializeChaos(ctx context.Context, podChaos *chao
 	log := r.Log.WithValues("podchaos", podChaos.Name)
 	log.Info("Initializing PodChaos")
 
-	infrastructure.ChaosExperimentsTotal.WithLabelValues("PodChaos", podChaos.Namespace, string(podChaos.Spec.Action)).Inc()
-	infrastructure.ChaosExperimentsActive.WithLabelValues("PodChaos", podChaos.Namespace, "Pending").Inc()
-
 	podChaos.Status.Phase = chaosv1alpha1.ChaosPhasePending
 	now := metav1.Now()
 	podChaos.Status.StartTime = &now
@@ -121,6 +120,7 @@ func (r *PodChaosReconciler) initializeChaos(ctx context.Context, podChaos *chao
 	if err := r.Status().Update(ctx, podChaos); err != nil {
 		return ctrl.Result{}, err
 	}
+	infrastructure.ChaosExperimentsTotal.WithLabelValues("PodChaos", podChaos.Namespace, string(podChaos.Spec.Action)).Inc()
 
 	r.Recorder.Eventf(podChaos, corev1.EventTypeNormal, "Initialized", "PodChaos experiment initialized with action %s", podChaos.Spec.Action)
 	return ctrl.Result{Requeue: true}, nil
@@ -156,8 +156,6 @@ func (r *PodChaosReconciler) executeChaos(ctx context.Context, podChaos *chaosv1
 	r.stampWaveTime(ctx, podChaos)
 
 	podChaos.Status.Phase = chaosv1alpha1.ChaosPhaseRunning
-	infrastructure.ChaosExperimentsActive.WithLabelValues("PodChaos", podChaos.Namespace, "Pending").Dec()
-	infrastructure.ChaosExperimentsActive.WithLabelValues("PodChaos", podChaos.Namespace, "Running").Inc()
 
 	now := metav1.Now()
 	podChaos.Status.Conditions = append(podChaos.Status.Conditions, metav1.Condition{
@@ -226,7 +224,6 @@ func (r *PodChaosReconciler) monitorChaos(ctx context.Context, podChaos *chaosv1
 		infrastructure.ChaosExecutionErrors.WithLabelValues("PodChaos", podChaos.Namespace, "wave_error").Inc()
 	} else {
 		log.Info("Wave complete", "pods_killed", killed)
-		infrastructure.ChaosTargetsAffected.WithLabelValues("PodChaos", podChaos.Namespace, string(podChaos.Spec.Action)).Add(float64(killed))
 		r.Recorder.Eventf(podChaos, corev1.EventTypeNormal, "WaveFired", "Kill wave completed: %d pod(s) affected", killed)
 	}
 
@@ -261,13 +258,12 @@ func (r *PodChaosReconciler) killWave(ctx context.Context, podChaos *chaosv1alph
 	}
 
 	log.Info("Targets selected", "count", len(targets))
-	infrastructure.ChaosTargetsAffected.WithLabelValues("PodChaos", podChaos.Namespace, string(podChaos.Spec.Action)).Add(float64(len(targets)))
-
 	executor := domain.NewPodChaosExecutor(&podChaos.Spec, podOps)
 	if err := executor.Execute(ctx, targets); err != nil {
 		infrastructure.ChaosExecutionErrors.WithLabelValues("PodChaos", podChaos.Namespace, "execution_error").Inc()
 		return 0, fmt.Errorf("executing chaos: %w", err)
 	}
+	infrastructure.ChaosTargetsAffected.WithLabelValues("PodChaos", podChaos.Namespace, string(podChaos.Spec.Action)).Add(float64(len(targets)))
 
 	podNames := make([]string, len(targets))
 	for i, p := range targets {
@@ -309,7 +305,6 @@ func (r *PodChaosReconciler) updateCompletedStatus(ctx context.Context, podChaos
 	now := metav1.Now()
 	podChaos.Status.CompletionTime = &now
 
-	infrastructure.ChaosExperimentsActive.WithLabelValues("PodChaos", podChaos.Namespace, "Running").Dec()
 	infrastructure.ChaosExperimentsStatus.WithLabelValues("PodChaos", podChaos.Namespace, "Completed").Inc()
 
 	if podChaos.Status.StartTime != nil {
@@ -340,8 +335,10 @@ func (r *PodChaosReconciler) updateFailedStatus(ctx context.Context, podChaos *c
 	podChaos.Status.Message = message
 	now := metav1.Now()
 	podChaos.Status.CompletionTime = &now
+	if podChaos.Status.StartTime != nil {
+		infrastructure.ChaosExperimentsDuration.WithLabelValues("PodChaos", podChaos.Namespace, string(podChaos.Spec.Action)).Observe(now.Time.Sub(podChaos.Status.StartTime.Time).Seconds())
+	}
 
-	infrastructure.ChaosExperimentsActive.WithLabelValues("PodChaos", podChaos.Namespace, "Pending").Dec()
 	infrastructure.ChaosExperimentsStatus.WithLabelValues("PodChaos", podChaos.Namespace, "Failed").Inc()
 
 	podChaos.Status.Conditions = append(podChaos.Status.Conditions, metav1.Condition{

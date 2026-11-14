@@ -24,10 +24,10 @@ import (
 )
 
 const (
-	StressChaosFinalizer   = "chaos.engineering.io/stresschaos-finalizer"
-	stressPIDsAnnotation   = "chaos.engineering.io/stress-pids"
-	stressContainerAnnot   = "chaos.engineering.io/stress-container"
-	stressDiskPathAnnot    = "chaos.engineering.io/stress-disk-path"
+	StressChaosFinalizer = "chaos.engineering.io/stresschaos-finalizer"
+	stressPIDsAnnotation = "chaos.engineering.io/stress-pids"
+	stressContainerAnnot = "chaos.engineering.io/stress-container"
+	stressDiskPathAnnot  = "chaos.engineering.io/stress-disk-path"
 )
 
 // StressChaosReconciler reconciles a StressChaos object
@@ -64,8 +64,10 @@ func (r *StressChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}()
 
 	if !stressChaos.DeletionTimestamp.IsZero() {
+		infrastructure.RemoveChaosExperiment("StressChaos", stressChaos.Namespace, stressChaos.Name)
 		return r.handleDeletion(ctx, &stressChaos)
 	}
+	observeExperimentMetrics("StressChaos", stressChaos.Namespace, stressChaos.Name, actionLabel(stressChaos.Spec.Stressors), string(stressChaos.Spec.Mode), string(stressChaos.Status.Phase), stressChaos.Status.Conditions, stressChaos.Status.StartTime, stressChaos.Status.CompletionTime, stressChaos.Status.AffectedPods)
 
 	if !controllerutil.ContainsFinalizer(&stressChaos, StressChaosFinalizer) {
 		controllerutil.AddFinalizer(&stressChaos, StressChaosFinalizer)
@@ -100,8 +102,6 @@ func (r *StressChaosReconciler) initializeChaos(ctx context.Context, stressChaos
 	log.Info("Initializing StressChaos")
 
 	action := actionLabel(stressChaos.Spec.Stressors)
-	infrastructure.ChaosExperimentsTotal.WithLabelValues("StressChaos", stressChaos.Namespace, action).Inc()
-	infrastructure.ChaosExperimentsActive.WithLabelValues("StressChaos", stressChaos.Namespace, "Pending").Inc()
 
 	stressChaos.Status.Phase = chaosv1alpha1.ChaosPhasePending
 	now := metav1.Now()
@@ -121,6 +121,7 @@ func (r *StressChaosReconciler) initializeChaos(ctx context.Context, stressChaos
 		log.Error(err, "Failed to update status")
 		return ctrl.Result{}, err
 	}
+	infrastructure.ChaosExperimentsTotal.WithLabelValues("StressChaos", stressChaos.Namespace, action).Inc()
 
 	r.Recorder.Eventf(stressChaos, corev1.EventTypeNormal, "Initialized", "StressChaos experiment initialized with stressors: %s", action)
 	return ctrl.Result{Requeue: true}, nil
@@ -154,8 +155,6 @@ func (r *StressChaosReconciler) executeChaos(ctx context.Context, stressChaos *c
 
 	log.Info("Targets selected", "count", len(targets))
 	action := actionLabel(stressChaos.Spec.Stressors)
-	infrastructure.ChaosTargetsAffected.WithLabelValues("StressChaos", stressChaos.Namespace, action).Add(float64(len(targets)))
-
 	script := buildStressScript(stressChaos.Spec.Stressors)
 	podNames := make([]string, 0, len(targets))
 	targetResults := make([]chaosv1alpha1.TargetResult, 0, len(targets))
@@ -176,6 +175,7 @@ func (r *StressChaosReconciler) executeChaos(ctx context.Context, stressChaos *c
 		}
 
 		log.Info("Stress started", "pod", pod.Name, "pids", pids)
+		infrastructure.ChaosTargetsAffected.WithLabelValues("StressChaos", stressChaos.Namespace, action).Inc()
 		targetResults = append(targetResults, chaosv1alpha1.TargetResult{
 			Name: podRef, Success: true, AppliedAt: metav1.Now(),
 		})
@@ -203,8 +203,6 @@ func (r *StressChaosReconciler) executeChaos(ctx context.Context, stressChaos *c
 	stressChaos.Status.AffectedPods = podNames
 	stressChaos.Status.Result = infrastructure.BuildResult(targetResults, false)
 	stressChaos.Status.Phase = chaosv1alpha1.ChaosPhaseRunning
-	infrastructure.ChaosExperimentsActive.WithLabelValues("StressChaos", stressChaos.Namespace, "Pending").Dec()
-	infrastructure.ChaosExperimentsActive.WithLabelValues("StressChaos", stressChaos.Namespace, "Running").Inc()
 
 	now := metav1.Now()
 	condition := metav1.Condition{
@@ -331,7 +329,6 @@ func (r *StressChaosReconciler) updateCompletedStatus(ctx context.Context, stres
 	now := metav1.Now()
 	stressChaos.Status.CompletionTime = &now
 
-	infrastructure.ChaosExperimentsActive.WithLabelValues("StressChaos", stressChaos.Namespace, "Running").Dec()
 	infrastructure.ChaosExperimentsStatus.WithLabelValues("StressChaos", stressChaos.Namespace, "Completed").Inc()
 
 	action := actionLabel(stressChaos.Spec.Stressors)
@@ -364,8 +361,10 @@ func (r *StressChaosReconciler) updateFailedStatus(ctx context.Context, stressCh
 	stressChaos.Status.Message = message
 	now := metav1.Now()
 	stressChaos.Status.CompletionTime = &now
+	if stressChaos.Status.StartTime != nil {
+		infrastructure.ChaosExperimentsDuration.WithLabelValues("StressChaos", stressChaos.Namespace, actionLabel(stressChaos.Spec.Stressors)).Observe(now.Time.Sub(stressChaos.Status.StartTime.Time).Seconds())
+	}
 
-	infrastructure.ChaosExperimentsActive.WithLabelValues("StressChaos", stressChaos.Namespace, "Pending").Dec()
 	infrastructure.ChaosExperimentsStatus.WithLabelValues("StressChaos", stressChaos.Namespace, "Failed").Inc()
 
 	condition := metav1.Condition{

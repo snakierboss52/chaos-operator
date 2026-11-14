@@ -23,11 +23,11 @@ import (
 )
 
 const (
-	HTTPChaosFinalizer   = "chaos.engineering.io/httpchaos-finalizer"
-	annotHTTPApplied     = "chaos.engineering.io/http-fault-applied"
-	annotHTTPContainer   = "chaos.engineering.io/http-container"
+	HTTPChaosFinalizer    = "chaos.engineering.io/httpchaos-finalizer"
+	annotHTTPApplied      = "chaos.engineering.io/http-fault-applied"
+	annotHTTPContainer    = "chaos.engineering.io/http-container"
 	annotHTTPWaveInterval = "chaos.engineering.io/wave-interval"
-	annotHTTPLastWave    = "chaos.engineering.io/last-wave-time"
+	annotHTTPLastWave     = "chaos.engineering.io/last-wave-time"
 )
 
 // HTTPChaosReconciler reconciles a HTTPChaos object
@@ -43,6 +43,7 @@ type HTTPChaosReconciler struct {
 // +kubebuilder:rbac:groups=chaos.engineering.io,resources=httpchaos,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=chaos.engineering.io,resources=httpchaos/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=chaos.engineering.io,resources=httpchaos/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch
 
 func (r *HTTPChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	start := time.Now()
@@ -63,8 +64,10 @@ func (r *HTTPChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}()
 
 	if !hc.DeletionTimestamp.IsZero() {
+		infrastructure.RemoveChaosExperiment("HTTPChaos", hc.Namespace, hc.Name)
 		return r.handleDeletion(ctx, &hc)
 	}
+	observeExperimentMetrics("HTTPChaos", hc.Namespace, hc.Name, httpActionLabel(hc.Spec), string(hc.Spec.Mode), string(hc.Status.Phase), hc.Status.Conditions, hc.Status.StartTime, hc.Status.CompletionTime, hc.Status.AffectedPods)
 
 	if !controllerutil.ContainsFinalizer(&hc, HTTPChaosFinalizer) {
 		controllerutil.AddFinalizer(&hc, HTTPChaosFinalizer)
@@ -97,8 +100,6 @@ func (r *HTTPChaosReconciler) initializeChaos(ctx context.Context, hc *chaosv1al
 	log.Info("Initializing HTTPChaos")
 
 	action := httpActionLabel(hc.Spec)
-	infrastructure.ChaosExperimentsTotal.WithLabelValues("HTTPChaos", hc.Namespace, action).Inc()
-	infrastructure.ChaosExperimentsActive.WithLabelValues("HTTPChaos", hc.Namespace, "Pending").Inc()
 
 	hc.Status.Phase = chaosv1alpha1.ChaosPhasePending
 	now := metav1.Now()
@@ -115,6 +116,7 @@ func (r *HTTPChaosReconciler) initializeChaos(ctx context.Context, hc *chaosv1al
 	if err := r.Status().Update(ctx, hc); err != nil {
 		return ctrl.Result{}, err
 	}
+	infrastructure.ChaosExperimentsTotal.WithLabelValues("HTTPChaos", hc.Namespace, action).Inc()
 	r.Recorder.Eventf(hc, corev1.EventTypeNormal, "Initialized", "HTTPChaos experiment initialized with fault type %s", httpActionLabel(hc.Spec))
 	return ctrl.Result{Requeue: true}, nil
 }
@@ -133,11 +135,8 @@ func (r *HTTPChaosReconciler) executeChaos(ctx context.Context, hc *chaosv1alpha
 	}
 
 	r.Recorder.Eventf(hc, corev1.EventTypeNormal, "Executing", "HTTP fault injected into %d pod(s)", affected)
-	r.stampWaveTime(ctx, hc)
 
 	hc.Status.Phase = chaosv1alpha1.ChaosPhaseRunning
-	infrastructure.ChaosExperimentsActive.WithLabelValues("HTTPChaos", hc.Namespace, "Pending").Dec()
-	infrastructure.ChaosExperimentsActive.WithLabelValues("HTTPChaos", hc.Namespace, "Running").Inc()
 
 	now := metav1.Now()
 	hc.Status.Conditions = append(hc.Status.Conditions, metav1.Condition{
@@ -152,6 +151,7 @@ func (r *HTTPChaosReconciler) executeChaos(ctx context.Context, hc *chaosv1alpha
 	if err := r.Status().Update(ctx, hc); err != nil {
 		return ctrl.Result{}, err
 	}
+	r.stampWaveTime(ctx, hc)
 
 	return ctrl.Result{RequeueAfter: r.nextRequeue(hc)}, nil
 }
@@ -349,7 +349,6 @@ func (r *HTTPChaosReconciler) updateCompletedStatus(ctx context.Context, hc *cha
 	now := metav1.Now()
 	hc.Status.CompletionTime = &now
 	action := httpActionLabel(hc.Spec)
-	infrastructure.ChaosExperimentsActive.WithLabelValues("HTTPChaos", hc.Namespace, "Running").Dec()
 	infrastructure.ChaosExperimentsStatus.WithLabelValues("HTTPChaos", hc.Namespace, "Completed").Inc()
 	if hc.Status.StartTime != nil {
 		infrastructure.ChaosExperimentsDuration.WithLabelValues("HTTPChaos", hc.Namespace, action).
@@ -373,7 +372,9 @@ func (r *HTTPChaosReconciler) updateFailedStatus(ctx context.Context, hc *chaosv
 	hc.Status.Message = msg
 	now := metav1.Now()
 	hc.Status.CompletionTime = &now
-	infrastructure.ChaosExperimentsActive.WithLabelValues("HTTPChaos", hc.Namespace, "Pending").Dec()
+	if hc.Status.StartTime != nil {
+		infrastructure.ChaosExperimentsDuration.WithLabelValues("HTTPChaos", hc.Namespace, httpActionLabel(hc.Spec)).Observe(now.Time.Sub(hc.Status.StartTime.Time).Seconds())
+	}
 	infrastructure.ChaosExperimentsStatus.WithLabelValues("HTTPChaos", hc.Namespace, "Failed").Inc()
 	hc.Status.Conditions = append(hc.Status.Conditions, metav1.Condition{
 		Type: chaosv1alpha1.ConditionTypeCompleted, Status: metav1.ConditionFalse,
