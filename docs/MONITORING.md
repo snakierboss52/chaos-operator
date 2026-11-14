@@ -1,245 +1,82 @@
-# 📊 Guía de Monitoreo y Observabilidad
+# Monitoreo local
 
-Este documento describe cómo usar el stack de monitoreo con Prometheus y Grafana para observar tus experimentos de Chaos Engineering.
-
-## 🚀 Instalación Rápida
+El stack del laboratorio kind incluye Traefik, Prometheus, Grafana y
+kube-state-metrics. Para instalarlo:
 
 ```bash
 make kind-up
 make addons-install
 ```
 
-El stack local usa charts upstream de Helm para Traefik, Prometheus, Grafana y
-kube-state-metrics. Las versiones y valores de kind están en `scripts/helms/`.
-kube-state-metrics se instala como release separado porque los dashboards
-consultan métricas `kube_*`. InfluxDB permanece como manifiesto local para
-soportar el streaming de k6.
+La instalación del operador es independiente. Si aún no está instalada,
+consulta [Instalación](INSTALLATION.md). La configuración de charts y recursos
+locales está bajo `scripts/helms/` y `monitoring/`.
 
-Para quitar las releases: `make addons-uninstall`. La configuración de AWS se
-añadirá como perfil separado; la configuración local usa credenciales de
-desarrollo, por lo que no debe aplicarse a un cluster AWS.
+## Interfaces
 
-## 🔗 Acceso a las Interfaces
+- Prometheus: <http://prometheus.localhost:30080>
+- Grafana: <http://grafana.localhost:30080>
+- Métricas del operador: <http://operator.localhost:30080/metrics>, cuando
+  están desplegados el operador y su ruta local.
 
-### Para Kind (cluster local):
+El usuario/contraseña inicial configurado para Grafana local es `admin` /
+`admin`. Cambia las credenciales antes de cualquier uso fuera del entorno
+local. El cluster kind mapea el puerto `30080` al loopback; consulta
+[`scripts/kind/README.md`](../scripts/kind/README.md) para recrear el cluster o
+usar port-forward.
 
-El Ingress de Traefik expone las interfaces localmente sin port-forward:
+## Métricas del operador
 
-- **Prometheus**: http://prometheus.localhost:30080
-- **Grafana**: http://grafana.localhost:30080
-- **Métricas del operador**: http://operator.localhost:30080/metrics (si está
-  instalado el operador y existe el Service de métricas al instalar addons).
+El servicio de métricas es `chaos-operator-metrics` en `chaos-system`, puerto
+8080. Para consultarlo directamente:
 
-kind mapea el NodePort `30080` al loopback del host. Ese mapeo se establece al
-crear el cluster. Si el cluster ya existía antes de agregarlo, recréalo con
-`make kind-down && make kind-up`. Como alternativa, los targets `make load-prom-pf`
-y `make load-grafana-pf` abren port-forwards.
-
-### Credenciales de Grafana
-
-- **Usuario**: `admin`
-- **Contraseña**: `admin`
-
-## 📈 Métricas Disponibles
-
-El operador exporta las siguientes métricas en Prometheus:
-
-### Métricas de Experimentos
-
-| Métrica | Tipo | Descripción | Labels |
-|---------|------|-------------|--------|
-| `chaos_experiments_total` | Counter | Total de experimentos creados | type, namespace, action |
-| `chaos_experiments_active` | Gauge | Experimentos actualmente activos | type, namespace, phase |
-| `chaos_experiments_duration_seconds` | Histogram | Duración de los experimentos | type, namespace, action |
-| `chaos_targets_affected_total` | Counter | Total de targets (pods) afectados | type, namespace, action |
-| `chaos_experiments_status_total` | Counter | Experimentos por estado final | type, namespace, status |
-
-### Métricas de Control
-
-| Métrica | Tipo | Descripción | Labels |
-|---------|------|-------------|--------|
-| `chaos_blast_radius_limit_total` | Counter | Veces que se alcanzó el límite de blast radius | type, namespace |
-| `chaos_execution_errors_total` | Counter | Errores de ejecución | type, namespace, error_type |
-| `chaos_reconciliation_duration_seconds` | Histogram | Duración del loop de reconciliación | type, namespace |
-
-## 📊 Dashboard de Chaos Engineering
-
-El dashboard incluye los siguientes paneles:
-
-### 1. Vista General (Top Row)
-- **Total Chaos Experiments**: Número total de experimentos creados
-- **Active Experiments**: Experimentos actualmente en ejecución
-- **Targets Affected**: Total de pods afectados
-- **Execution Errors**: Errores de ejecución
-
-### 2. Análisis Temporal
-- **Experiments by Type Over Time**: Tasa de experimentos por tipo
-- **Active Experiments by Phase**: Distribución de fases
-- **Experiment Duration (p95)**: Percentil 95 de duración
-- **Targets Affected by Action**: Targets por tipo de acción
-
-### 3. Estado y Errores
-- **Experiments by Status**: Distribución por estado (Completed/Failed)
-- **Reconciliation Duration**: Tiempo de procesamiento del operador
-- **Blast Radius Limits Hit**: Límites de seguridad alcanzados
-- **Errors by Type**: Tabla de errores por categoría
-
-## 🔍 Queries Útiles en Prometheus
-
-### Ver experimentos activos:
-```promql
-chaos_experiments_active
+```bash
+kubectl port-forward -n chaos-system svc/chaos-operator-metrics 8080:8080
+curl http://localhost:8080/metrics
 ```
 
-### Tasa de experimentos por minuto:
-```promql
-rate(chaos_experiments_total[5m])
-```
+Métricas de experimento registradas por el código:
 
-### Duración promedio de experimentos:
-```promql
-rate(chaos_experiments_duration_seconds_sum[5m]) / rate(chaos_experiments_duration_seconds_count[5m])
-```
+| Métrica | Descripción |
+| --- | --- |
+| `chaos_experiments_total` | Experimentos observados, etiquetados por tipo/namespace/acción |
+| `chaos_experiments_active` | Experimentos activos por fase |
+| `chaos_experiments_duration_seconds` | Histograma de duración |
+| `chaos_targets_affected_total` | Targets afectados |
+| `chaos_experiments_status_total` | Conteo por estado |
+| `chaos_blast_radius_limit_total` | Veces que se limitó el blast radius |
+| `chaos_execution_errors_total` | Errores de ejecución |
+| `chaos_reconciliation_duration_seconds` | Duración de reconciliación |
+| `chaos_experiment_info` | Información del experimento observado |
+| `chaos_experiment_runtime_seconds` | Runtime del experimento |
+| `chaos_experiment_affected_pod` | Pods afectados por experimento |
 
-### Tasa de errores:
+Ejemplos PromQL:
+
 ```promql
+sum by (type, namespace) (chaos_experiments_active)
 rate(chaos_execution_errors_total[5m])
+sum by (namespace) (rate(chaos_targets_affected_total[5m]))
 ```
 
-### Pods afectados por namespace:
-```promql
-sum(chaos_targets_affected_total) by (namespace)
-```
+Los labels exactos dependen de cada métrica y están definidos en
+`internal/infrastructure/metrics.go`.
 
-### Experimentos completados vs fallidos:
-```promql
-chaos_experiments_status_total{status="Completed"}
-chaos_experiments_status_total{status="Failed"}
-```
+## Salud del manager
 
-## 🎯 Ejemplo de Uso
-
-### 1. Ejecutar un experimento:
+Los probes del manager están en el puerto 8081:
 
 ```bash
-kubectl apply -f samples/podchaos/basic-kill-one.yaml
+kubectl port-forward -n chaos-system deployment/chaos-operator 8081:8081
+curl http://localhost:8081/healthz
+curl http://localhost:8081/readyz
 ```
 
-### 2. Observar en Grafana:
+## Grafana y Prometheus
 
-Abre http://localhost:3000 y navega al dashboard "Chaos Engineering Dashboard"
+Los dashboards provisionados están en `monitoring/`. Las consultas deben
+coincidir con los nombres y labels actuales de las métricas; ejecuta primero
+las expresiones en Prometheus si adaptas un dashboard.
 
-Verás:
-- ✅ **Total Experiments** incrementarse
-- 📊 **Active Experiments** mostrar el experimento en ejecución
-- 🎯 **Targets Affected** incrementarse cuando se ejecute
-- ⏱️ **Duration** registrar la duración cuando complete
-
-### 3. Verificar métricas en Prometheus:
-
-Abre http://localhost:9090 y ejecuta:
-
-```promql
-chaos_experiments_total{namespace="chaos-demo"}
-```
-
-## 🔔 Configurar Alertas (Opcional)
-
-Puedes agregar reglas de alertas en Prometheus:
-
-```yaml
-groups:
-  - name: chaos_engineering
-    interval: 10s
-    rules:
-      - alert: TooManyActiveExperiments
-        expr: sum(chaos_experiments_active) > 10
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Demasiados experimentos activos"
-          
-      - alert: HighErrorRate
-        expr: rate(chaos_execution_errors_total[5m]) > 0.1
-        for: 2m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Alta tasa de errores en experimentos"
-```
-
-## 📊 Monitoreo del Cluster
-
-Además de las métricas del operador, puedes monitorear el estado del cluster:
-
-### Métricas de Kubernetes (adicionales):
-
-```promql
-# Pods por fase
-kube_pod_status_phase
-
-# Uso de CPU
-container_cpu_usage_seconds_total
-
-# Uso de memoria
-container_memory_usage_bytes
-
-# Pods reiniciados
-rate(kube_pod_container_status_restarts_total[5m])
-```
-
-## 🛠️ Troubleshooting
-
-### Prometheus no muestra métricas del operador:
-
-1. Verificar que el operador está corriendo:
-```bash
-kubectl get pods -n default -l app=chaos-operator
-```
-
-2. Verificar que las métricas están disponibles:
-```bash
-kubectl port-forward -n default <operator-pod> 8080:8080
-curl http://localhost:8080/metrics | grep chaos_
-```
-
-3. Verificar configuración de Prometheus:
-```bash
-kubectl logs -n monitoring -l app=prometheus
-```
-
-### Grafana no muestra el dashboard:
-
-1. Verificar que el ConfigMap existe:
-```bash
-kubectl get configmap grafana-dashboards -n monitoring
-```
-
-2. Reiniciar Grafana:
-```bash
-kubectl rollout restart deployment/grafana -n monitoring
-```
-
-3. Importar manualmente:
-   - Ir a Dashboards → Import
-   - Copiar el contenido de `monitoring/chaos-dashboard.json`
-   - Importar
-
-## 📚 Recursos Adicionales
-
-- [Prometheus Documentation](https://prometheus.io/docs/)
-- [Grafana Documentation](https://grafana.com/docs/)
-- [PromQL Cheat Sheet](https://promlabs.com/promql-cheat-sheet/)
-
-## 🎓 Mejores Prácticas
-
-1. **Retención de Datos**: Por defecto, Prometheus guarda 15 días de datos
-2. **Refresh Rate**: El dashboard se actualiza cada 10 segundos
-3. **Alertas**: Configura alertas para eventos críticos
-4. **Backups**: Haz backup de tus dashboards personalizados
-5. **Resource Limits**: Ajusta los límites de memoria/CPU según tu uso
-
----
-
-¿Preguntas? Consulta el [README.md](README.md) principal o abre un issue.
+Para retirar las releases locales ejecuta `make addons-uninstall`. Esa
+operación no elimina el operador ni sus CRDs.
