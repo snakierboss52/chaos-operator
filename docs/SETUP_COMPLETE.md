@@ -264,3 +264,8 @@ Tu sistema de Chaos Engineering ahora tiene:
 - ✅ Visualización de experimentos y su impacto
 
 **¡Comienza a inyectar chaos y observa todo en tiempo real!** 🚀
+
+
+for pod in $(kubectl get pods -n chaos-demo -l app=nginx -o name); do
+  kubectl exec -n chaos-demo "$pod" -- sh -c 'apk add --no-cache iproute2 iptables && tc -V'
+done

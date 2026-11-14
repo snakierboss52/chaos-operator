@@ -1,14 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "Prometheus",
-      "description": "Prometheus datasource",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
   "__elements": {},
   "__requires": [
     {
@@ -68,7 +58,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -117,9 +107,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "sum(chaos_experiments_total{job=\"kubernetes-pods\",namespace=~\"$namespace\"})",
+          "expr": "count(max by (type,namespace,experiment) (chaos_experiment_info{job=\"kubernetes-pods\",namespace=~\"$namespace\"}))",
           "instant": true,
           "legendFormat": "__auto",
           "refId": "A"
@@ -129,7 +119,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -185,9 +175,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "sum(chaos_experiments_active{job=\"kubernetes-pods\",namespace=~\"$namespace\"})",
+          "expr": "count(max by (type,namespace,experiment) (chaos_experiment_info{job=\"kubernetes-pods\",namespace=~\"$namespace\",phase=~\"Pending|Running\"}))",
           "instant": true,
           "legendFormat": "__auto",
           "refId": "A"
@@ -197,7 +187,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -246,9 +236,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "sum(chaos_targets_affected_total{job=\"kubernetes-pods\",namespace=~\"$namespace\"})",
+          "expr": "count(max by (type,namespace,experiment,pod) (chaos_experiment_affected_pod{job=\"kubernetes-pods\",namespace=~\"$namespace\"}))",
           "instant": true,
           "legendFormat": "__auto",
           "refId": "A"
@@ -258,7 +248,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -308,13 +298,13 @@
         },
         "textMode": "auto"
       },
-      "title": "Errores de Ejecuci\u00f3n",
+      "title": "Errores de Ejecución",
       "type": "stat",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "expr": "sum(chaos_execution_errors_total{job=\"kubernetes-pods\",namespace=~\"$namespace\"})",
           "instant": true,
@@ -326,7 +316,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -382,7 +372,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "expr": "sum(chaos_blast_radius_limit_total{job=\"kubernetes-pods\",namespace=~\"$namespace\"})",
           "instant": true,
@@ -394,7 +384,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -450,7 +440,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "expr": "histogram_quantile(0.95, sum(rate(chaos_reconciliation_duration_seconds_bucket{job=\"kubernetes-pods\",namespace=~\"$namespace\"}[5m])) by (le))",
           "instant": true,
@@ -474,16 +464,16 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
-      "description": "Barras = ejecuciones por acci\u00f3n (eje izq.) | L\u00ednea naranja = duraci\u00f3n p95 (eje der.)",
+      "description": "Columnas = experimentos que siguen presentes como CR, agrupados por acción. Línea = duración por experimento (tiempo transcurrido si está activo; duración final si terminó). No depende de creaciones en los últimos 5 minutos.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "Ejecuciones",
+            "axisLabel": "Experimentos actuales",
             "drawStyle": "bars",
             "fillOpacity": 70,
             "gradientMode": "none",
@@ -523,7 +513,7 @@
           {
             "matcher": {
               "id": "byRegexp",
-              "options": "Duraci\u00f3n.*"
+              "options": "Duración.*"
             },
             "properties": [
               {
@@ -562,7 +552,7 @@
               },
               {
                 "id": "custom.axisLabel",
-                "value": "Duraci\u00f3n (s)"
+                "value": "Duración (s)"
               }
             ]
           }
@@ -590,25 +580,25 @@
           "sort": "desc"
         }
       },
-      "title": "PodChaos \u2014 Ejecuciones y Duraci\u00f3n p95",
+      "title": "PodChaos — Experimentos actuales y duración por experimento",
       "type": "timeseries",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "sum(increase(chaos_experiments_total{job=\"kubernetes-pods\",type=\"PodChaos\",namespace=~\"$namespace\"}[5m])) by (action)",
+          "expr": "count by (action) (chaos_experiment_info{job=\"kubernetes-pods\",type=\"PodChaos\",namespace=~\"$namespace\"})",
           "legendFormat": "{{action}}",
           "refId": "A"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(chaos_experiments_duration_seconds_bucket{job=\"kubernetes-pods\",type=\"PodChaos\",namespace=~\"$namespace\"}[5m])) by (le))",
-          "legendFormat": "Duraci\u00f3n p95",
+          "expr": "max by (experiment, action, phase) (chaos_experiment_runtime_seconds{job=\"kubernetes-pods\",type=\"PodChaos\",namespace=~\"$namespace\"})",
+          "legendFormat": "Duración {{experiment}} ({{phase}})",
           "refId": "B"
         }
       ]
@@ -616,16 +606,16 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
-      "description": "Barras = ejecuciones por acci\u00f3n (eje izq.) | L\u00ednea naranja = duraci\u00f3n p95 (eje der.)",
+      "description": "Columnas = experimentos que siguen presentes como CR, agrupados por acción. Línea = duración por experimento (tiempo transcurrido si está activo; duración final si terminó). No depende de creaciones en los últimos 5 minutos.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "Ejecuciones",
+            "axisLabel": "Experimentos actuales",
             "drawStyle": "bars",
             "fillOpacity": 70,
             "gradientMode": "none",
@@ -665,7 +655,7 @@
           {
             "matcher": {
               "id": "byRegexp",
-              "options": "Duraci\u00f3n.*"
+              "options": "Duración.*"
             },
             "properties": [
               {
@@ -704,7 +694,7 @@
               },
               {
                 "id": "custom.axisLabel",
-                "value": "Duraci\u00f3n (s)"
+                "value": "Duración (s)"
               }
             ]
           }
@@ -732,25 +722,25 @@
           "sort": "desc"
         }
       },
-      "title": "NetworkChaos \u2014 Ejecuciones y Duraci\u00f3n p95",
+      "title": "NetworkChaos — Experimentos actuales y duración por experimento",
       "type": "timeseries",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "sum(increase(chaos_experiments_total{job=\"kubernetes-pods\",type=\"NetworkChaos\",namespace=~\"$namespace\"}[5m])) by (action)",
+          "expr": "count by (action) (chaos_experiment_info{job=\"kubernetes-pods\",type=\"NetworkChaos\",namespace=~\"$namespace\"})",
           "legendFormat": "{{action}}",
           "refId": "A"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(chaos_experiments_duration_seconds_bucket{job=\"kubernetes-pods\",type=\"NetworkChaos\",namespace=~\"$namespace\"}[5m])) by (le))",
-          "legendFormat": "Duraci\u00f3n p95",
+          "expr": "max by (experiment, action, phase) (chaos_experiment_runtime_seconds{job=\"kubernetes-pods\",type=\"NetworkChaos\",namespace=~\"$namespace\"})",
+          "legendFormat": "Duración {{experiment}} ({{phase}})",
           "refId": "B"
         }
       ]
@@ -758,16 +748,16 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
-      "description": "Barras = ejecuciones por acci\u00f3n (eje izq.) | L\u00ednea naranja = duraci\u00f3n p95 (eje der.)",
+      "description": "Columnas = experimentos que siguen presentes como CR, agrupados por acción. Línea = duración por experimento (tiempo transcurrido si está activo; duración final si terminó). No depende de creaciones en los últimos 5 minutos.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "Ejecuciones",
+            "axisLabel": "Experimentos actuales",
             "drawStyle": "bars",
             "fillOpacity": 70,
             "gradientMode": "none",
@@ -807,7 +797,7 @@
           {
             "matcher": {
               "id": "byRegexp",
-              "options": "Duraci\u00f3n.*"
+              "options": "Duración.*"
             },
             "properties": [
               {
@@ -846,7 +836,7 @@
               },
               {
                 "id": "custom.axisLabel",
-                "value": "Duraci\u00f3n (s)"
+                "value": "Duración (s)"
               }
             ]
           }
@@ -874,25 +864,25 @@
           "sort": "desc"
         }
       },
-      "title": "StressChaos \u2014 Ejecuciones y Duraci\u00f3n p95",
+      "title": "StressChaos — Experimentos actuales y duración por experimento",
       "type": "timeseries",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "sum(increase(chaos_experiments_total{job=\"kubernetes-pods\",type=\"StressChaos\",namespace=~\"$namespace\"}[5m])) by (action)",
+          "expr": "count by (action) (chaos_experiment_info{job=\"kubernetes-pods\",type=\"StressChaos\",namespace=~\"$namespace\"})",
           "legendFormat": "{{action}}",
           "refId": "A"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(chaos_experiments_duration_seconds_bucket{job=\"kubernetes-pods\",type=\"StressChaos\",namespace=~\"$namespace\"}[5m])) by (le))",
-          "legendFormat": "Duraci\u00f3n p95",
+          "expr": "max by (experiment, action, phase) (chaos_experiment_runtime_seconds{job=\"kubernetes-pods\",type=\"StressChaos\",namespace=~\"$namespace\"})",
+          "legendFormat": "Duración {{experiment}} ({{phase}})",
           "refId": "B"
         }
       ]
@@ -900,16 +890,16 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
-      "description": "Barras = ejecuciones por acci\u00f3n (eje izq.) | L\u00ednea naranja = duraci\u00f3n p95 (eje der.)",
+      "description": "Columnas = experimentos que siguen presentes como CR, agrupados por acción. Línea = duración por experimento (tiempo transcurrido si está activo; duración final si terminó). No depende de creaciones en los últimos 5 minutos.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "Ejecuciones",
+            "axisLabel": "Experimentos actuales",
             "drawStyle": "bars",
             "fillOpacity": 70,
             "gradientMode": "none",
@@ -949,7 +939,7 @@
           {
             "matcher": {
               "id": "byRegexp",
-              "options": "Duraci\u00f3n.*"
+              "options": "Duración.*"
             },
             "properties": [
               {
@@ -988,7 +978,7 @@
               },
               {
                 "id": "custom.axisLabel",
-                "value": "Duraci\u00f3n (s)"
+                "value": "Duración (s)"
               }
             ]
           }
@@ -1016,25 +1006,25 @@
           "sort": "desc"
         }
       },
-      "title": "HTTPChaos \u2014 Ejecuciones y Duraci\u00f3n p95",
+      "title": "HTTPChaos — Experimentos actuales y duración por experimento",
       "type": "timeseries",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "sum(increase(chaos_experiments_total{job=\"kubernetes-pods\",type=\"HTTPChaos\",namespace=~\"$namespace\"}[5m])) by (action)",
+          "expr": "count by (action) (chaos_experiment_info{job=\"kubernetes-pods\",type=\"HTTPChaos\",namespace=~\"$namespace\"})",
           "legendFormat": "{{action}}",
           "refId": "A"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(chaos_experiments_duration_seconds_bucket{job=\"kubernetes-pods\",type=\"HTTPChaos\",namespace=~\"$namespace\"}[5m])) by (le))",
-          "legendFormat": "Duraci\u00f3n p95",
+          "expr": "max by (experiment, action, phase) (chaos_experiment_runtime_seconds{job=\"kubernetes-pods\",type=\"HTTPChaos\",namespace=~\"$namespace\"})",
+          "legendFormat": "Duración {{experiment}} ({{phase}})",
           "refId": "B"
         }
       ]
@@ -1054,7 +1044,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1103,9 +1093,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "sum(chaos_experiments_total{job=\"kubernetes-pods\",type=\"PodChaos\",namespace=~\"$namespace\"})",
+          "expr": "count(max by (type,namespace,experiment) (chaos_experiment_info{job=\"kubernetes-pods\",type=\"PodChaos\",namespace=~\"$namespace\"}))",
           "instant": true,
           "legendFormat": "__auto",
           "refId": "A"
@@ -1115,7 +1105,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1164,9 +1154,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "sum(chaos_experiments_total{job=\"kubernetes-pods\",type=\"NetworkChaos\",namespace=~\"$namespace\"})",
+          "expr": "count(max by (type,namespace,experiment) (chaos_experiment_info{job=\"kubernetes-pods\",type=\"NetworkChaos\",namespace=~\"$namespace\"}))",
           "instant": true,
           "legendFormat": "__auto",
           "refId": "A"
@@ -1176,7 +1166,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1225,9 +1215,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "sum(chaos_experiments_total{job=\"kubernetes-pods\",type=\"StressChaos\",namespace=~\"$namespace\"})",
+          "expr": "count(max by (type,namespace,experiment) (chaos_experiment_info{job=\"kubernetes-pods\",type=\"StressChaos\",namespace=~\"$namespace\"}))",
           "instant": true,
           "legendFormat": "__auto",
           "refId": "A"
@@ -1237,7 +1227,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1286,9 +1276,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "sum(chaos_experiments_total{job=\"kubernetes-pods\",type=\"HTTPChaos\",namespace=~\"$namespace\"})",
+          "expr": "count(max by (type,namespace,experiment) (chaos_experiment_info{job=\"kubernetes-pods\",type=\"HTTPChaos\",namespace=~\"$namespace\"}))",
           "instant": true,
           "legendFormat": "__auto",
           "refId": "A"
@@ -1298,16 +1288,16 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
-      "description": "Duraci\u00f3n p50, p95 y p99 de todos los tipos de caos en la misma vista para comparar.",
+      "description": "P95 calculado sobre la duración actual/final de los experimentos que siguen presentes como CR. Se reconstruye desde su status después de reiniciar el operador.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "Duraci\u00f3n (s)",
+            "axisLabel": "Duración (s)",
             "drawStyle": "line",
             "fillOpacity": 8,
             "gradientMode": "opacity",
@@ -1343,43 +1333,43 @@
           "sort": "desc"
         }
       },
-      "title": "Duraci\u00f3n p95 por Tipo (comparativa)",
+      "title": "Duración p95 por Tipo (comparativa)",
       "type": "timeseries",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(chaos_experiments_duration_seconds_bucket{job=\"kubernetes-pods\",type=\"PodChaos\",namespace=~\"$namespace\"}[5m])) by (le))",
-          "legendFormat": "PodChaos p95",
+          "expr": "quantile(0.95, chaos_experiment_runtime_seconds{job=\"kubernetes-pods\",type=\"PodChaos\",namespace=~\"$namespace\"})",
+          "legendFormat": "PodChaos p95 registrado",
           "refId": "A"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(chaos_experiments_duration_seconds_bucket{job=\"kubernetes-pods\",type=\"NetworkChaos\",namespace=~\"$namespace\"}[5m])) by (le))",
-          "legendFormat": "NetworkChaos p95",
+          "expr": "quantile(0.95, chaos_experiment_runtime_seconds{job=\"kubernetes-pods\",type=\"NetworkChaos\",namespace=~\"$namespace\"})",
+          "legendFormat": "NetworkChaos p95 registrado",
           "refId": "B"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(chaos_experiments_duration_seconds_bucket{job=\"kubernetes-pods\",type=\"StressChaos\",namespace=~\"$namespace\"}[5m])) by (le))",
-          "legendFormat": "StressChaos p95",
+          "expr": "quantile(0.95, chaos_experiment_runtime_seconds{job=\"kubernetes-pods\",type=\"StressChaos\",namespace=~\"$namespace\"})",
+          "legendFormat": "StressChaos p95 registrado",
           "refId": "C"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(chaos_experiments_duration_seconds_bucket{job=\"kubernetes-pods\",type=\"HTTPChaos\",namespace=~\"$namespace\"}[5m])) by (le))",
-          "legendFormat": "HTTPChaos p95",
+          "expr": "quantile(0.95, chaos_experiment_runtime_seconds{job=\"kubernetes-pods\",type=\"HTTPChaos\",namespace=~\"$namespace\"})",
+          "legendFormat": "HTTPChaos p95 registrado",
           "refId": "D"
         }
       ]
@@ -1387,9 +1377,9 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
-      "description": "Estado actual de todos los experimentos. Running = activos ahora. Completed/Failed = hist\u00f3rico.",
+      "description": "Estado actual de todos los experimentos. Running = activos ahora. Completed/Failed = histórico.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1434,7 +1424,7 @@
                     "options": {
                       "Running": {
                         "color": "green",
-                        "text": "\u25b6 Running",
+                        "text": "▶ Running",
                         "index": 0
                       }
                     }
@@ -1444,7 +1434,7 @@
                     "options": {
                       "Completed": {
                         "color": "blue",
-                        "text": "\u2713 Completed",
+                        "text": "✓ Completed",
                         "index": 1
                       }
                     }
@@ -1454,7 +1444,7 @@
                     "options": {
                       "Failed": {
                         "color": "red",
-                        "text": "\u2717 Failed",
+                        "text": "✗ Failed",
                         "index": 2
                       }
                     }
@@ -1464,7 +1454,7 @@
                     "options": {
                       "Pending": {
                         "color": "yellow",
-                        "text": "\u23f3 Pending",
+                        "text": "⏳ Pending",
                         "index": 3
                       }
                     }
@@ -1535,15 +1525,15 @@
           }
         ]
       },
-      "title": "Experimentos \u2014 Estado Actual",
+      "title": "Experimentos — Estado Actual",
       "type": "table",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
-          "expr": "sum(chaos_experiments_active{job=\"kubernetes-pods\",namespace=~\"$namespace\",phase=\"Running\"} != 0) by (type, namespace)",
+          "expr": "count by (type, namespace, phase) (chaos_experiment_info{job=\"kubernetes-pods\",namespace=~\"$namespace\",phase=~\"Pending|Running\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -1552,9 +1542,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
-          "expr": "sum(chaos_experiments_status_total{job=\"kubernetes-pods\",namespace=~\"$namespace\"} != 0) by (type, status, namespace)",
+          "expr": "count by (type, namespace, phase) (chaos_experiment_info{job=\"kubernetes-pods\",namespace=~\"$namespace\",phase=~\"Completed|Failed\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -1602,7 +1592,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1654,9 +1644,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "count(kube_pod_status_phase{phase=\"Running\"})",
+          "expr": "sum(kube_pod_status_phase{phase=\"Running\"})",
           "instant": true,
           "legendFormat": "__auto",
           "refId": "A"
@@ -1666,7 +1656,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1722,9 +1712,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "count(kube_pod_status_phase{phase=\"Pending\"}) or vector(0)",
+          "expr": "sum(kube_pod_status_phase{phase=\"Pending\"}) or vector(0)",
           "instant": true,
           "legendFormat": "__auto",
           "refId": "A"
@@ -1734,7 +1724,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1790,9 +1780,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "count(kube_pod_status_phase{phase=\"Failed\"}) or vector(0)",
+          "expr": "sum(kube_pod_status_phase{phase=\"Failed\"}) or vector(0)",
           "instant": true,
           "legendFormat": "__auto",
           "refId": "A"
@@ -1802,7 +1792,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1854,7 +1844,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"})",
           "instant": true,
@@ -1866,7 +1856,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1915,7 +1905,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "expr": "sum(kube_node_status_allocatable{resource=\"cpu\"})",
           "instant": true,
@@ -1927,7 +1917,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1976,7 +1966,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "expr": "sum(kube_node_status_allocatable{resource=\"memory\"})",
           "instant": true,
@@ -1988,7 +1978,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -2101,36 +2091,36 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "count(kube_pod_status_phase{phase=\"Running\"})",
+          "expr": "sum(kube_pod_status_phase{phase=\"Running\"})",
           "legendFormat": "Running",
           "refId": "A"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "count(kube_pod_status_phase{phase=\"Pending\"}) or vector(0)",
+          "expr": "sum(kube_pod_status_phase{phase=\"Pending\"}) or vector(0)",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "count(kube_pod_status_phase{phase=\"Failed\"}) or vector(0)",
+          "expr": "sum(kube_pod_status_phase{phase=\"Failed\"}) or vector(0)",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
-          "expr": "count(kube_pod_status_phase{phase=\"Succeeded\"}) or vector(0)",
+          "expr": "sum(kube_pod_status_phase{phase=\"Succeeded\"}) or vector(0)",
           "legendFormat": "Succeeded",
           "refId": "D"
         }
@@ -2139,7 +2129,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "description": "Pods ready (baja al crear reemplazos) + rate de kills por chaos (eje der.)",
       "fieldConfig": {
@@ -2225,7 +2215,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "expr": "sum(kube_pod_status_ready{namespace=~\"$namespace\", condition=\"true\"})",
           "legendFormat": "Ready pods",
@@ -2234,7 +2224,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "expr": "sum(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Running\"})",
           "legendFormat": "Running pods",
@@ -2243,7 +2233,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "expr": "sum(increase(chaos_targets_affected_total{job=\"kubernetes-pods\",type=\"PodChaos\",namespace=~\"$namespace\"}[2m]))",
           "legendFormat": "Kills (2m window)",
@@ -2254,9 +2244,9 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
-      "description": "Uso de CPU de contenedores por namespace. Requiere m\u00e9tricas cAdvisor desde kubelet.",
+      "description": "Uso de CPU de contenedores por namespace. Requiere métricas cAdvisor desde kubelet.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2304,7 +2294,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\",image!=\"\",namespace=~\"$namespace\"}[5m])) by (namespace)",
           "legendFormat": "{{namespace}}",
@@ -2315,9 +2305,9 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
-      "description": "Working set memory de contenedores por namespace. Requiere m\u00e9tricas cAdvisor desde kubelet.",
+      "description": "Working set memory de contenedores por namespace. Requiere métricas cAdvisor desde kubelet.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2365,7 +2355,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "expr": "sum(container_memory_working_set_bytes{container!=\"\",image!=\"\",namespace=~\"$namespace\"}) by (namespace)",
           "legendFormat": "{{namespace}}",
@@ -2376,9 +2366,9 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
-      "description": "RX positivo (arriba), TX negativo (abajo). Requiere m\u00e9tricas cAdvisor desde kubelet.",
+      "description": "RX positivo (arriba), TX negativo (abajo). Requiere métricas cAdvisor desde kubelet.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2433,13 +2423,13 @@
           "sort": "none"
         }
       },
-      "title": "Network Bandwidth por Namespace (RX \u2191 / TX \u2193)",
+      "title": "Network Bandwidth por Namespace (RX ↑ / TX ↓)",
       "type": "timeseries",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "expr": "sum(rate(container_network_receive_bytes_total{namespace=~\"$namespace\"}[5m])) by (namespace)",
           "legendFormat": "RX {{namespace}}",
@@ -2448,13 +2438,368 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "expr": "sum(rate(container_network_transmit_bytes_total{namespace=~\"$namespace\"}[5m])) by (namespace)",
           "legendFormat": "TX {{namespace}}",
           "refId": "B"
         }
       ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Vista de los workloads del cluster filtrados por el namespace seleccionado.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "unit": "cores"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 63
+      },
+      "id": 31,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "topk(10, sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{container!=\"\",namespace=~\"$namespace\"}[5m])))",
+          "legendFormat": "{{namespace}} / {{pod}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Pods por CPU",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Vista de los workloads del cluster filtrados por el namespace seleccionado.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 63
+      },
+      "id": 32,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "topk(10, sum by (namespace, pod) (container_memory_working_set_bytes{container!=\"\",namespace=~\"$namespace\"}))",
+          "legendFormat": "{{namespace}} / {{pod}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Pods por memoria",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Vista de los workloads del cluster filtrados por el namespace seleccionado.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 71
+      },
+      "id": 33,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (namespace, deployment) (kube_deployment_spec_replicas{namespace=~\"$namespace\"})",
+          "legendFormat": "Deseadas: {{namespace}} / {{deployment}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (namespace, deployment) (kube_deployment_status_replicas_available{namespace=~\"$namespace\"})",
+          "legendFormat": "Disponibles: {{namespace}} / {{deployment}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Replicas deseadas vs disponibles por Deployment",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Datos reconstruidos desde los recursos Chaos y su status actual.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 87
+      },
+      "id": 34,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (type,namespace,experiment,action,mode,phase,reason) (chaos_experiment_info{job=\"kubernetes-pods\",namespace=~\"$namespace\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Experimentos: tipo, acción, modo y estado",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Datos reconstruidos desde los recursos Chaos y su status actual.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 95
+      },
+      "id": 35,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (type,namespace,experiment,pod,action) (chaos_experiment_affected_pod{job=\"kubernetes-pods\",namespace=~\"$namespace\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Pods afectados por experimento",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Segundos transcurridos desde que comenzó cada experimento; al finalizar muestra su duración total.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "mappings": [],
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 103
+      },
+      "id": 36,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (type,namespace,experiment,action,phase) (chaos_experiment_runtime_seconds{job=\"kubernetes-pods\",namespace=~\"$namespace\"})",
+          "legendFormat": "{{type}} / {{experiment}} ({{phase}})",
+          "refId": "A"
+        }
+      ],
+      "title": "Duración por experimento",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -2488,7 +2833,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "${datasource}"
         },
         "definition": "label_values(kube_pod_info, namespace)",
         "hide": 0,
@@ -2514,7 +2859,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Chaos Engineering \u2014 Kind Cluster",
+  "title": "Chaos Engineering — Kind Cluster",
   "uid": "chaos-kind-v1",
   "version": 1,
   "weekStart": ""

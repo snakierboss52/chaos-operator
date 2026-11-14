@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100" role="img" aria-labelledby="title desc">
+  <title id="title">Arquitectura del cluster local del Chaos Engineering Operator</title>
+  <desc id="desc">Cluster kind con Traefik como entrada, Chaos Operator, workloads de Nginx y Apache, y monitoreo con Prometheus, Grafana, kube-state-metrics e InfluxDB para k6.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#527da8"/></marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#e28b36"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#2e9a74"/></marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7b8795"/></marker>
+    <style>
+      text{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#192b3d}
+      .title{font-size:32px;font-weight:750;letter-spacing:-.4px}.subtitle{font-size:15px;fill:#587087}
+      .zone-title{font-size:16px;font-weight:700;letter-spacing:.8px;fill:#486176}
+      .node-title{font-size:16px;font-weight:700}.node-sub{font-size:12px;fill:#5c7185}.tiny{font-size:11px;fill:#627487}
+      .edge{fill:none;stroke-width:2.5}.dashed{stroke-dasharray:7 6}
+      .card{fill:#fff;stroke:#d5e0e9;stroke-width:1.5}.pill{font-size:11px;font-weight:650}
+    </style>
+  </defs>
+  <rect width="1600" height="1100" fill="#f5f8fb"/>
+  <text x="56" y="62" class="title">Arquitectura del cluster local</text>
+  <text x="56" y="91" class="subtitle">Chaos Engineering Operator · kind · workloads demo · observabilidad</text>
+  <g transform="translate(1315 43)">
+    <rect width="230" height="48" rx="24" fill="#e8f0fa" stroke="#c7d7e8"/>
+    <circle cx="25" cy="24" r="11" fill="#326ce5"/><path d="M25 7v34M8 24h34M13 12l24 24M37 12L13 36" stroke="#fff" stroke-width="2"/>
+    <text x="47" y="29" font-size="14" font-weight="700">kind · chaos-testing-v2</text>
+  </g>
+
+  <!-- External actors -->
+  <g>
+    <rect x="48" y="188" width="190" height="92" rx="14" class="card"/>
+    <circle cx="84" cy="224" r="18" fill="#e8eff6"/><circle cx="84" cy="218" r="6" fill="#62788d"/><path d="M72 239c2-10 22-10 24 0" fill="#62788d"/>
+    <text x="112" y="218" class="node-title">Usuario / navegador</text><text x="112" y="241" class="node-sub">Grafana · Prometheus</text><text x="112" y="260" class="node-sub">operator.localhost</text>
+    <rect x="48" y="700" width="190" height="92" rx="14" class="card"/>
+    <circle cx="84" cy="746" r="22" fill="#f5e8d9"/><text x="84" y="752" text-anchor="middle" font-size="13" font-weight="800" fill="#e27932">k6</text>
+    <text x="116" y="738" class="node-title">Generador de carga</text><text x="116" y="761" class="node-sub">k6 · solicitudes HTTP</text><text x="116" y="779" class="node-sub">pruebas contra workloads</text>
+  </g>
+
+  <!-- Cluster boundary -->
+  <rect x="275" y="130" width="1275" height="900" rx="24" fill="#fff" stroke="#9cb6ca" stroke-width="2"/>
+  <rect x="298" y="143" width="220" height="30" rx="15" fill="#e7eff7"/>
+  <text x="408" y="163" text-anchor="middle" class="zone-title">CLUSTER KUBERNETES</text>
+
+  <!-- Ingress traffic path -->
+  <path d="M238 224H365" class="edge" stroke="#527da8" marker-end="url(#arrow-blue)"/>
+  <text x="267" y="211" class="tiny">HTTP :30080</text>
+
+  <!-- Traefik -->
+  <rect x="365" y="185" width="280" height="125" rx="16" fill="#f3f0fb" stroke="#cbbfea" stroke-width="1.5"/>
+  <g transform="translate(389 208)">
+    <path d="M12 0h28l12 12v31l-12 12H12L0 43V12z" fill="#6b4ca5"/>
+    <path d="M15 17h22M15 25h22M15 33h22M15 41h22" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <text x="456" y="222" class="node-title">Traefik Ingress</text><text x="456" y="246" class="node-sub">namespace: traefik</text><text x="456" y="266" class="node-sub">NodePort 30080 · routing por host/path</text>
+  <rect x="389" y="278" width="235" height="20" rx="10" fill="#e7ddf5"/><text x="506" y="292" text-anchor="middle" class="pill" fill="#65449d">grafana · prometheus · operator API/metrics</text>
+
+  <!-- Observability namespace -->
+  <rect x="700" y="154" width="820" height="400" rx="20" fill="#f4f8fc" stroke="#c4d5e4" stroke-width="1.5"/>
+  <text x="724" y="183" class="zone-title">NAMESPACE · monitoring</text>
+  <!-- Grafana -->
+  <rect x="720" y="200" width="315" height="118" rx="14" fill="#fff7e9" stroke="#edc88f" stroke-width="1.5"/>
+  <circle cx="758" cy="239" r="21" fill="#f28b25"/><path d="M758 222a17 17 0 1 0 16 22M758 230a9 9 0 1 0 8 13" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/><circle cx="772" cy="222" r="3" fill="#fff"/>
+  <text x="793" y="237" class="node-title">Grafana</text><text x="793" y="258" class="node-sub">dashboards · visualización</text><text x="793" y="279" class="node-sub">datasources: Prometheus + InfluxDB-k6</text>
+  <rect x="743" y="289" width="129" height="20" rx="10" fill="#fff0d8"/><text x="807" y="303" text-anchor="middle" class="pill" fill="#965a16">grafana.localhost</text>
+  <!-- Prometheus -->
+  <rect x="1100" y="200" width="315" height="118" rx="14" fill="#fff3ef" stroke="#edb5a5" stroke-width="1.5"/>
+  <path d="M1139 221c-8 11 4 13-2 22-6 8-2 17 8 17s15-9 10-17c-4-7-3-12-1-17-8 4-8 9-8 9s-5-7-7-14z" fill="#e6522c"/><path d="M1145 244c-4 5-2 10 2 10s6-4 3-8c-2-2-2-4-2-4z" fill="#ffd4c2"/>
+  <text x="1170" y="237" class="node-title">Prometheus</text><text x="1170" y="258" class="node-sub">scrape_interval: 15s</text><text x="1170" y="279" class="node-sub">métricas del operador y del cluster</text>
+  <rect x="1123" y="289" width="160" height="20" rx="10" fill="#ffe5dd"/><text x="1203" y="303" text-anchor="middle" class="pill" fill="#a73d23">prometheus.localhost</text>
+  <!-- state metrics and influx -->
+  <rect x="720" y="376" width="315" height="104" rx="14" class="card"/>
+  <circle cx="758" cy="415" r="21" fill="#e8f0fb"/><path d="M747 421h22M750 414h16M754 407h8" stroke="#326ce5" stroke-width="3" stroke-linecap="round"/>
+  <text x="793" y="411" class="node-title">kube-state-metrics</text><text x="793" y="433" class="node-sub">estado de pods, deployments y recursos</text><text x="793" y="453" class="node-sub">expone métricas Kubernetes</text>
+  <rect x="1100" y="376" width="315" height="104" rx="14" fill="#f3f0fb" stroke="#cbbfea" stroke-width="1.5"/>
+  <ellipse cx="1139" cy="405" rx="18" ry="7" fill="#7952a8"/><path d="M1121 405v25c0 4 8 8 18 8s18-4 18-8v-25" fill="#9b77c3"/><path d="M1121 417c0 4 8 8 18 8s18-4 18-8" fill="none" stroke="#fff" stroke-width="2"/>
+  <text x="1170" y="410" class="node-title">InfluxDB</text><text x="1170" y="432" class="node-sub">backend de métricas de k6</text><text x="1170" y="452" class="node-sub">ClusterIP · solo uso local</text>
+  <!-- datasource/scrape paths -->
+  <path d="M1035 249H1100" class="edge" stroke="#e28b36" marker-end="url(#arrow-orange)"/>
+  <text x="1041" y="238" class="tiny">consulta datasource</text>
+  <path d="M1130 318V332H1030V376" class="edge dashed" stroke="#527da8" marker-end="url(#arrow-blue)"/>
+  <rect x="879" y="321" width="145" height="19" rx="9" fill="#f4f8fc"/>
+  <text x="951" y="335" text-anchor="middle" class="tiny">scrape del cluster</text>
+  <!-- Grafana to Influx -->
+  <path d="M850 318V350H1255V376" class="edge" stroke="#7952a8" marker-end="url(#arrow-orange)"/>
+  <rect x="1051" y="337" width="154" height="21" rx="10" fill="#f4f8fc"/>
+  <text x="1128" y="352" text-anchor="middle" class="tiny">datasource InfluxDB-k6</text>
+
+  <!-- Operator namespace -->
+  <rect x="700" y="581" width="390" height="386" rx="20" fill="#fff8ef" stroke="#e8c694" stroke-width="1.5"/>
+  <text x="724" y="610" class="zone-title">NAMESPACE · chaos-system</text>
+  <rect x="730" y="635" width="330" height="147" rx="16" fill="#fff" stroke="#e1bf8d" stroke-width="1.5"/>
+  <g transform="translate(758 663)">
+    <path d="M24 0l7 10 12-1 2 12 10 7-7 10 3 12-12 2-6 11-10-7-12 3-2-12L0 51l7-10-3-12 12-2z" fill="#df7b22"/>
+    <circle cx="27" cy="34" r="8" fill="#fff3e3"/><circle cx="27" cy="34" r="3" fill="#df7b22"/>
+    <circle cx="7" cy="5" r="3" fill="#df7b22"/><circle cx="54" cy="4" r="3" fill="#df7b22"/><circle cx="58" cy="58" r="3" fill="#df7b22"/>
+  </g>
+  <text x="838" y="669" class="node-title">Chaos Operator</text><text x="838" y="692" class="node-sub">controller-runtime · 1 réplica</text><text x="838" y="714" class="node-sub">reconcile · selecciona targets</text><text x="838" y="736" class="node-sub">ejecuta Pod / Network / Stress / HTTP Chaos</text>
+  <rect x="758" y="750" width="278" height="22" rx="11" fill="#fff0da"/><text x="897" y="765" text-anchor="middle" class="pill" fill="#9d5b17">API :8082 · métricas :8080</text>
+  <rect x="730" y="813" width="330" height="111" rx="14" class="card"/>
+  <path d="M760 846h38M760 858h38M760 870h38" stroke="#326ce5" stroke-width="3" stroke-linecap="round"/><circle cx="754" cy="846" r="3" fill="#326ce5"/><circle cx="754" cy="858" r="3" fill="#326ce5"/><circle cx="754" cy="870" r="3" fill="#326ce5"/>
+  <text x="813" y="849" class="node-title">CRDs / experimentos</text><text x="813" y="872" class="node-sub">PodChaos · NetworkChaos · StressChaos</text><text x="813" y="893" class="node-sub">HTTPChaos · estado · condiciones · eventos</text>
+  <path d="M820 813V790" class="edge" stroke="#e28b36" marker-end="url(#arrow-orange)"/>
+
+  <!-- Workloads namespace -->
+  <rect x="1150" y="581" width="370" height="386" rx="20" fill="#f0f9f5" stroke="#a8d2c0" stroke-width="1.5"/>
+  <text x="1174" y="610" class="zone-title">NAMESPACE · chaos-demo</text>
+  <rect x="1180" y="638" width="310" height="114" rx="14" fill="#fff" stroke="#b9d8cc" stroke-width="1.5"/>
+  <path d="M1210 659l22 8v19c0 14-10 23-22 28-12-5-22-14-22-28v-19z" fill="#009639"/><path d="M1196 685h28M1200 678h20M1204 671h12" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <text x="1245" y="672" class="node-title">Nginx · 6 réplicas</text><text x="1245" y="695" class="node-sub">Service: nginx-target:80</text><text x="1245" y="717" class="node-sub">CPU 50m–200m · memoria 64–128Mi</text>
+  <rect x="1180" y="775" width="310" height="114" rx="14" fill="#fff" stroke="#b9d8cc" stroke-width="1.5"/>
+  <circle cx="1210" cy="817" r="22" fill="#d94b35"/><text x="1210" y="822" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">A</text>
+  <text x="1245" y="809" class="node-title">Apache httpd · 2 réplicas</text><text x="1245" y="832" class="node-sub">Service: apache-target:80</text><text x="1245" y="854" class="node-sub">imagen con tc + iptables</text>
+  <rect x="1180" y="907" width="310" height="36" rx="18" fill="#ddf2e8"/><text x="1335" y="930" text-anchor="middle" class="pill" fill="#237756">Deployments mantienen réplicas</text>
+
+  <!-- Operator -> workloads and API -->
+  <path d="M1060 706H1120V693H1180" class="edge" stroke="#e28b36" marker-end="url(#arrow-orange)"/>
+  <path d="M1060 728H1126V832H1180" class="edge" stroke="#e28b36" marker-end="url(#arrow-orange)"/>
+  <!-- Prom scrape operator -->
+  <path d="M1400 318V540H1080V635" class="edge dashed" stroke="#527da8" marker-end="url(#arrow-blue)"/>
+  <rect x="1241" y="516" width="157" height="20" rx="10" fill="#fff"/>
+  <text x="1319" y="531" text-anchor="middle" class="tiny">scrape /metrics</text>
+  <!-- K8s API control -->
+  <rect x="472" y="490" width="168" height="76" rx="14" fill="#f1f4f7" stroke="#c7d1da"/>
+  <circle cx="503" cy="528" r="17" fill="#326ce5"/><path d="M503 511v34M486 528h34M491 516l24 24M515 516l-24 24" stroke="#fff" stroke-width="2"/>
+  <text x="531" y="523" class="node-title">Kubernetes API</text><text x="531" y="544" class="node-sub">CRs · Pods · Events</text>
+  <path d="M640 528H670V747H730" class="edge dashed" stroke="#7b8795" marker-end="url(#arrow-gray)"/>
+  <!-- k6 traffic and metrics -->
+  <path d="M238 746V980H1508V832H1490" class="edge" stroke="#2e9a74" marker-end="url(#arrow-green)"/>
+  <rect x="1241" y="946" width="195" height="20" rx="10" fill="#f5f8fb"/>
+  <text x="1338" y="960" text-anchor="middle" class="tiny">HTTP load → Apache</text>
+  <text x="276" y="815" class="tiny">Salida de métricas opcional: k6 → InfluxDB (port-forward)</text>
+
+  <!-- Legend -->
+  <g transform="translate(55 1000)">
+    <text x="0" y="15" class="zone-title">FLUJOS</text>
+    <path d="M90 10h55" class="edge" stroke="#527da8" marker-end="url(#arrow-blue)"/><text x="154" y="15" class="tiny">acceso usuario / scrape Prometheus</text>
+    <path d="M390 10h55" class="edge" stroke="#e28b36" marker-end="url(#arrow-orange)"/><text x="454" y="15" class="tiny">reconciliación / inyección de chaos</text>
+    <path d="M730 10h55" class="edge" stroke="#2e9a74" marker-end="url(#arrow-green)"/><text x="794" y="15" class="tiny">tráfico HTTP de prueba</text>
+    <path d="M1030 10h55" class="edge dashed" stroke="#7b8795" marker-end="url(#arrow-gray)"/><text x="1094" y="15" class="tiny">Kubernetes API / control</text>
+  </g>
+  <text x="56" y="1065" class="tiny">Fuente: manifiestos de config/, monitoring/, scripts/helms/ y samples/workloads/. addons locales instalados por Helm salvo InfluxDB, que usa manifiesto propio.</text>
+</svg>

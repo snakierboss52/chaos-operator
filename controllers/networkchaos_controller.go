@@ -66,8 +66,10 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}()
 
 	if !nc.DeletionTimestamp.IsZero() {
+		infrastructure.RemoveChaosExperiment("NetworkChaos", nc.Namespace, nc.Name)
 		return r.handleDeletion(ctx, &nc)
 	}
+	observeExperimentMetrics("NetworkChaos", nc.Namespace, nc.Name, string(nc.Spec.Action), string(nc.Spec.Mode), string(nc.Status.Phase), nc.Status.Conditions, nc.Status.StartTime, nc.Status.CompletionTime, nc.Status.AffectedPods)
 
 	if !controllerutil.ContainsFinalizer(&nc, NetworkChaosFinalizer) {
 		controllerutil.AddFinalizer(&nc, NetworkChaosFinalizer)
@@ -99,9 +101,6 @@ func (r *NetworkChaosReconciler) initializeChaos(ctx context.Context, nc *chaosv
 	log := r.Log.WithValues("networkchaos", nc.Name)
 	log.Info("Initializing NetworkChaos")
 
-	infrastructure.ChaosExperimentsTotal.WithLabelValues("NetworkChaos", nc.Namespace, string(nc.Spec.Action)).Inc()
-	infrastructure.ChaosExperimentsActive.WithLabelValues("NetworkChaos", nc.Namespace, "Pending").Inc()
-
 	nc.Status.Phase = chaosv1alpha1.ChaosPhasePending
 	now := metav1.Now()
 	nc.Status.StartTime = &now
@@ -117,6 +116,7 @@ func (r *NetworkChaosReconciler) initializeChaos(ctx context.Context, nc *chaosv
 	if err := r.Status().Update(ctx, nc); err != nil {
 		return ctrl.Result{}, err
 	}
+	infrastructure.ChaosExperimentsTotal.WithLabelValues("NetworkChaos", nc.Namespace, string(nc.Spec.Action)).Inc()
 	r.Recorder.Eventf(nc, corev1.EventTypeNormal, "Initialized", "NetworkChaos experiment initialized with action %s", nc.Spec.Action)
 	return ctrl.Result{Requeue: true}, nil
 }
@@ -138,8 +138,6 @@ func (r *NetworkChaosReconciler) executeChaos(ctx context.Context, nc *chaosv1al
 	r.stampWaveTime(ctx, nc)
 
 	nc.Status.Phase = chaosv1alpha1.ChaosPhaseRunning
-	infrastructure.ChaosExperimentsActive.WithLabelValues("NetworkChaos", nc.Namespace, "Pending").Dec()
-	infrastructure.ChaosExperimentsActive.WithLabelValues("NetworkChaos", nc.Namespace, "Running").Inc()
 
 	now := metav1.Now()
 	nc.Status.Conditions = append(nc.Status.Conditions, metav1.Condition{
@@ -344,7 +342,6 @@ func (r *NetworkChaosReconciler) updateCompletedStatus(ctx context.Context, nc *
 	nc.Status.Message = msg
 	now := metav1.Now()
 	nc.Status.CompletionTime = &now
-	infrastructure.ChaosExperimentsActive.WithLabelValues("NetworkChaos", nc.Namespace, "Running").Dec()
 	infrastructure.ChaosExperimentsStatus.WithLabelValues("NetworkChaos", nc.Namespace, "Completed").Inc()
 	if nc.Status.StartTime != nil {
 		infrastructure.ChaosExperimentsDuration.WithLabelValues("NetworkChaos", nc.Namespace, string(nc.Spec.Action)).
@@ -368,7 +365,9 @@ func (r *NetworkChaosReconciler) updateFailedStatus(ctx context.Context, nc *cha
 	nc.Status.Message = msg
 	now := metav1.Now()
 	nc.Status.CompletionTime = &now
-	infrastructure.ChaosExperimentsActive.WithLabelValues("NetworkChaos", nc.Namespace, "Pending").Dec()
+	if nc.Status.StartTime != nil {
+		infrastructure.ChaosExperimentsDuration.WithLabelValues("NetworkChaos", nc.Namespace, string(nc.Spec.Action)).Observe(now.Time.Sub(nc.Status.StartTime.Time).Seconds())
+	}
 	infrastructure.ChaosExperimentsStatus.WithLabelValues("NetworkChaos", nc.Namespace, "Failed").Inc()
 	nc.Status.Conditions = append(nc.Status.Conditions, metav1.Condition{
 		Type: chaosv1alpha1.ConditionTypeCompleted, Status: metav1.ConditionFalse,
