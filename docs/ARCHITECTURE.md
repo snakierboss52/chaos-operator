@@ -1,213 +1,65 @@
-# Arquitectura del Operador de Chaos Engineering
+# Arquitectura
 
-## Visión General
+El repositorio implementa un operador Kubernetes con `controller-runtime`.
+Los tipos de API son `chaos.engineering.io/v1alpha1`: `PodChaos`,
+`NetworkChaos`, `StressChaos` y `HTTPChaos`.
 
-Este operador de Kubernetes implementa principios de Chaos Engineering para validar la resiliencia y confiabilidad de aplicaciones cloud-native. El operador permite inyectar diferentes tipos de fallos controlados en el cluster para identificar debilidades antes de que se conviertan en incidentes de producción.
+## Componentes
 
-## Principios de Diseño
-
-### 1. Cloud-Native First
-- Diseñado específicamente para entornos Kubernetes
-- Utiliza Custom Resource Definitions (CRDs) para definir experimentos de chaos
-- Integración nativa con la API de Kubernetes
-- Observabilidad completa mediante logs estructurados y métricas
-
-### 2. Seguridad por Diseño
-- Principio de privilegio mínimo mediante RBAC
-- Validación exhaustiva de recursos antes de ejecución
-- Capacidades de rollback automático
-- Límites de blast radius (radio de explosión) configurables
-
-### 3. Clean Architecture
-- Separación clara de concerns mediante capas
-- Domain-Driven Design para lógica de negocio
-- Dependency Injection para testabilidad
-- Interfaces bien definidas entre componentes
-
-## Arquitectura de Componentes
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Kubernetes API Server                        │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            │ Watch/List
-                            │
-┌───────────────────────────▼─────────────────────────────────────┐
-│                    Chaos Operator Manager                        │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │              Controller Runtime Manager                   │  │
-│  │  - Leader Election                                        │  │
-│  │  - Metrics Server                                         │  │
-│  │  - Health Probes                                          │  │
-│  │  - Webhook Server (Admission Control)                    │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  ┌───────────┐  ┌─────────────┐  ┌────────────┐               │
-│  │  PodChaos │  │ NetworkChaos│  │StressChaos │  ...          │
-│  │Controller │  │  Controller │  │ Controller │               │
-│  └─────┬─────┘  └──────┬──────┘  └──────┬─────┘               │
-│        │               │                │                       │
-│        └───────────────┴────────────────┘                       │
-│                        │                                         │
-│        ┌───────────────▼──────────────────┐                    │
-│        │    Chaos Execution Engine        │                    │
-│        │  - Strategy Pattern              │                    │
-│        │  - Factory Pattern               │                    │
-│        │  - Command Pattern               │                    │
-│        └───────────────┬──────────────────┘                    │
-│                        │                                         │
-│        ┌───────────────▼──────────────────┐                    │
-│        │      Chaos Executors             │                    │
-│        │  - Pod Killer                    │                    │
-│        │  - Network Manipulator           │                    │
-│        │  - Stress Injector               │                    │
-│        │  - HTTP Fault Injector           │                    │
-│        └──────────────────────────────────┘                    │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │
-                              │ Inject Chaos
-                              │
-┌─────────────────────────────▼───────────────────────────────────┐
-│                    Target Workloads                              │
-│  - Pods, Deployments, StatefulSets, etc.                        │
-└──────────────────────────────────────────────────────────────────┘
+```text
+cmd/manager
+    └── internal/app: scheme, manager, registro de controladores y servidores
+          ├── controllers/: reconciliadores por tipo de recurso
+          ├── internal/domain/: selección y reglas de dominio
+          ├── internal/infrastructure/: operaciones Kubernetes, métricas y reporte
+          └── internal/api/: API HTTP local para crear/consultar recursos
+api/v1alpha1/: tipos, validación, webhooks y deepcopy generado
+config/: CRDs, RBAC, deployment y servicios
 ```
 
-## Capas de la Arquitectura
+`cmd/manager` es el punto de entrada. `internal/app` construye el manager,
+inyecta cliente, logger, scheme y reporter, y registra los cuatro
+controladores. Los reconciliadores coordinan el ciclo de vida con Kubernetes;
+la selección de targets y las reglas reutilizables viven fuera de ellos.
 
-### Capa de API (api/)
-Define los tipos de recursos personalizados (CRDs) que representan diferentes experimentos de chaos:
-- `PodChaos` - Fallos a nivel de Pod
-- `NetworkChaos` - Fallos de red
-- `StressChaos` - Estrés de recursos
-- `HTTPChaos` - Fallos HTTP
-- `IOChaos` - Fallos de I/O
-- `TimeChaos` - Desviaciones temporales
+## Reconciliación
 
-### Capa de Control (controllers/)
-Implementa reconciliation loops para cada tipo de chaos:
-- Observa cambios en CRDs
-- Ejecuta lógica de reconciliación
-- Actualiza status de recursos
-- Maneja rollbacks y recuperación
+Cada controlador observa su recurso, valida precondiciones, selecciona pods,
+aplica límites configurados, ejecuta el efecto, actualiza `status` y registra
+métricas/eventos. El estado incluye fase, condiciones, tiempos y objetivos
+afectados según el tipo. Los finalizers permiten retirar efectos durante la
+eliminación del recurso.
 
-### Capa de Dominio (internal/domain/)
-Contiene la lógica de negocio pura:
-- Modelos de dominio
-- Reglas de negocio
-- Validaciones
-- Estrategias de ejecución
+La reconciliación puede repetirse: los cambios deben ser idempotentes, los
+errores deben devolver reintento y la limpieza debe tolerar recursos que ya no
+existen. Los detalles concretos se definen en cada controlador.
 
-### Capa de Infraestructura (internal/infrastructure/)
-Implementa interacciones con sistemas externos:
-- Cliente de Kubernetes
-- Ejecutores de chaos (inyección de fallos)
-- Métricas y observabilidad
-- Almacenamiento de estado
+## API HTTP
 
-## Patrones de Diseño Implementados
+`internal/api/` sirve rutas locales para crear recursos desde manifiestos o
+requests simplificados y leerlos por namespace/nombre. Esta API escribe CRDs;
+la ejecución sigue a cargo de los reconciliadores. Su namespace permitido se
+configura con `API_ALLOWED_NAMESPACES` (por defecto `chaos-demo`). No incluye
+autenticación, por lo que su exposición debe limitarse al laboratorio.
 
-### 1. Strategy Pattern
-Define una familia de algoritmos (estrategias de chaos) intercambiables:
-- `PodKillStrategy`
-- `NetworkLatencyStrategy`
-- `CPUStressStrategy`
+## Servidores y configuración
 
-### 2. Factory Pattern
-Crea ejecutores de chaos basados en el tipo de experimento:
-- `ChaosExecutorFactory` - Crea el ejecutor apropiado
+| Variable | Default | Uso |
+| --- | --- | --- |
+| `METRICS_ADDR` | `:8080` | Endpoint de métricas del manager |
+| `HEALTH_PROBE_ADDR` | `:8081` | `/healthz` y `/readyz` |
+| `API_ADDR` | `:8082` | API HTTP de experimentos |
+| `API_ALLOWED_NAMESPACES` | `chaos-demo` | Namespaces permitidos por la API HTTP |
+| `ENABLE_LEADER_ELECTION` | `false` en código | Leader election; deployment lo habilita |
+| `ENABLE_WEBHOOKS` | `false` | Registro de defaults y validaciones webhook |
 
-### 3. Builder Pattern
-Construye especificaciones complejas de chaos:
-- `ChaosExperimentBuilder` - Configuración fluida de experimentos
+Los webhooks se registran solo si `ENABLE_WEBHOOKS=true`; la presencia de
+validaciones en el código no implica que estén habilitados en cada despliegue.
 
-### 4. Observer Pattern
-Notifica cambios de estado:
-- Controllers observan CRDs
-- Webhooks validan cambios
+## Límites
 
-### 5. Command Pattern
-Encapsula operaciones de chaos como comandos:
-- `ExecuteChaosCommand`
-- `RollbackChaosCommand`
-
-### 6. Singleton Pattern
-Garantiza una única instancia del manager:
-- Manager de controller-runtime
-
-### 7. Repository Pattern
-Abstrae acceso a datos:
-- `ChaosExperimentRepository` - Acceso a CRDs
-
-## Flujo de Ejecución
-
-1. **Usuario crea un recurso de Chaos** (e.g., PodChaos)
-2. **Webhook de validación** verifica la especificación
-3. **Controller detecta el nuevo recurso** mediante watch
-4. **Reconcile loop inicia**:
-   - Valida pre-condiciones
-   - Selecciona targets según selectores
-   - Aplica limitaciones de blast radius
-   - Ejecuta estrategia de chaos
-   - Actualiza status del recurso
-5. **Monitor continuo** durante la duración del experimento
-6. **Cleanup y rollback** al finalizar o en caso de error
-
-## Consideraciones de Seguridad
-
-### RBAC
-- ServiceAccount dedicado para el operador
-- Permisos mínimos necesarios por tipo de chaos
-- ClusterRole y RoleBinding específicos
-
-### Blast Radius Control
-- Límite máximo de pods afectados
-- Namespaces permitidos/prohibidos
-- Labels de protección (chaos.engineering.io/protected: "true")
-
-### Admission Control
-- ValidatingWebhook para validar experimentos
-- MutatingWebhook para defaults seguros
-
-## Observabilidad
-
-### Logs Estructurados
-- JSON format
-- Niveles: Debug, Info, Warning, Error
-- Contexto: namespace, name, kind
-
-### Métricas (Prometheus)
-- `chaos_experiments_total` - Total de experimentos
-- `chaos_experiments_active` - Experimentos activos
-- `chaos_experiments_duration_seconds` - Duración
-- `chaos_targets_affected_total` - Targets afectados
-
-### Health Checks
-- `/healthz` - Liveness probe
-- `/readyz` - Readiness probe
-- `/metrics` - Prometheus metrics
-
-## Estrategia de Testing
-
-### Unit Tests
-- Lógica de dominio pura
-- Validaciones
-- Estrategias de chaos
-
-### Integration Tests
-- Controller reconciliation
-- Interacción con API de Kubernetes
-- Webhook validation
-
-### End-to-End Tests
-- Experimentos completos en cluster real
-- Validación de efectos
-- Rollback scenarios
-
-## Referencias
-
-- [Principles of Chaos Engineering](https://principlesofchaos.org/)
-- [Kubernetes Operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
-- [Controller Runtime](https://github.com/kubernetes-sigs/controller-runtime)
-- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+La API HTTP está diseñada para laboratorio y no tiene autenticación. `HTTPChaos`
+está acoplado a la configuración de Nginx que el controlador espera en el
+contenedor objetivo. Comprueba [Tipos de Chaos](CHAOS_TYPES.md),
+[API HTTP](PODCHAOS_HTTP_API.md) y los manifiestos actuales antes de asumir
+capacidades o garantías adicionales.

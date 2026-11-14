@@ -1,61 +1,34 @@
-# Editor Rules for Go Kubernetes Operators
+# Reglas para editores
 
-These rules are intended for IDE/editor configuration (GoLand, VS Code, etc.) to maintain consistency, reusability, clean code, and good architecture.
+Estas pautas aplican a GoLand, VS Code y editores similares; no requieren una
+configuración específica del editor.
 
-## Language & Formatting
-- Use Go 1.22+ toolchain.
-- Enable `gofumpt` formatting on save.
-- Set max line length guidance to 120 chars (not enforced by gofmt; use linter hints).
-- Use 4 spaces indentation for Go; 2 spaces for YAML/JSON/Markdown.
+## Formato
 
-## Linting & Static Analysis
-- Enable `golangci-lint` on save or pre-commit with the repo’s `.golangci.yml`.
-- Treat warnings as actionable; fix or justify with comments and follow-ups.
-- Prefer `context.Context` as the first parameter where applicable.
+- Usa Go 1.22.5 según `go.mod`.
+- Formatea Go con `gofumpt` y respeta las reglas de `.golangci.yml`.
+- Mantén la indentación existente: tabs para Go y dos espacios en YAML.
+- Escribe nombres y comentarios Go en inglés.
 
-## Project Structure Conventions
-- `cmd/manager`: Entry point only; no business logic.
-- `internal/`: Application wiring and internal packages not meant for external reuse.
-- `api/`: Versioned CRD types (`<group>/<version>`); keep conversion and defaults.
-- `controllers/`: Reconciler implementations; small, testable units.
-- `pkg/`: Reusable utilities and libraries; no coupling to controllers.
-- `config/`: Manifests and kustomize overlays when using Kubebuilder/Operator SDK.
-- `samples/`: Minimal CR examples per API version.
+## Organización
 
-## Coding Practices
-- Keep reconcilers idempotent; no side effects on repeated calls.
-- Separate concerns: resource building, apply/patch, status updates, event recording.
-- Use constants for common names/labels/annotations to reduce duplication.
-- Prefer small functions; target cyclomatic complexity < 10.
-- Avoid global state. Prefer dependency injection.
-- Handle errors explicitly; wrap with context using `%w`.
-- Log with structured key/value pairs.
+- `cmd/manager/`: punto de entrada.
+- `internal/app/`: bootstrap y composición de dependencias.
+- `internal/domain/`: reglas de negocio y selección desacoplada.
+- `internal/infrastructure/`: interacción con Kubernetes y otros sistemas.
+- `controllers/`: coordinación del ciclo de reconciliación.
+- `api/v1alpha1/`: tipos versionados, validación y deepcopy.
+- `config/` y `samples/`: manifiestos de instalación y ejemplos.
 
-## Testing
-- Minimum 80% coverage on business logic. Controllers can be covered by envtest.
-- Unit tests in `_test.go` files colocated with implementation.
-- Use table-driven tests. Keep tests deterministic and isolated.
-- Use fakes/mocks for clients and clock/time when necessary.
+## Prácticas
 
-## Versioning & APIs
-- Follow SemVer for application and Kubernetes API versions.
-- Avoid breaking API changes; implement conversions and defaulting.
-- Document deprecations with clear timelines.
+- Pasa `context.Context` primero en funciones que realizan llamadas externas.
+- Mantén reconciliación idempotente, errores explícitos y limpieza mediante
+  finalizers cuando corresponda.
+- Inyecta dependencias mediante interfaces donde facilite pruebas.
+- Actualiza pruebas y documentación junto con el comportamiento.
+- Ejecuta `make generate` y, si el esquema cambia, `make generate-crds` para
+  cambios en los tipos API.
 
-## Security & Compliance
-- Never hardcode secrets. Use Kubernetes Secrets or secret managers.
-- Apply RBAC least privilege. Scope permissions per controller.
-- Validate and default user input in APIs.
-
-## CI/CD & Automation
-- Run `make tidy`, `make lint`, and `make test` in CI.
-- Keep `Makefile` targets simple, composable, and documented.
-- Commit generated code and manifests only if reproducible.
-
-## Documentation
-- Maintain `README.md` and `docs/` alongside code (docs-as-code).
-- Add architecture decision records (ADRs) for major decisions.
-
-## Editor-specific
-- GoLand: enable `File Watchers` for `gofumpt` or rely on GoLand’s built-in formatter with gofumpt.
-- Enable on-save `go mod tidy` or run via `make tidy` frequently.
+La configuración de lint vive en `.golangci.yml`; el repositorio no impone una
+longitud máxima de línea ni un porcentaje fijo de cobertura en el Makefile.
